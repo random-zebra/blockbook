@@ -18,6 +18,7 @@
 | Myriad                   | 9043                    | 9143                  | 8043             | 38343                       |
 | GameCredits              | 9044                    | 9144                  | 8044             | 38344                       |
 | Groestlcoin              | 9045                    | 9145                  | 8045             | 38345                       |
+| PIVX                     | 9046                    | 9146                  | 8046             | 38346                       |
 | Testnet                  | 19030                   | 19130                 | 18030            | 48330                       |
 | Bcash Testnet            | 19031                   | 19131                 | 18031            | 48331                       |
 | Zcash Testnet            | 19032                   | 19132                 | 18032            | 48332                       |
@@ -27,5 +28,6 @@
 | Vertcoin Testnet         | 19040                   | 19140                 | 18040            | 48340                       |
 | Monacoin Testnet         | 19041                   | 19141                 | 18041            | 48341                       |
 | Groestlcoin Testnet      | 19045                   | 19145                 | 18045            | 48345                       |
+| PIVX Testnet             | 19046                   | 19146                 | 18046            | 48346                       |
 
 > NOTE: This document is generated from coin definitions in `configs/coins`.
