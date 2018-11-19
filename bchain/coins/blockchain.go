@@ -16,6 +16,7 @@ import (
 	"blockbook/bchain/coins/myriad"
 	"blockbook/bchain/coins/namecoin"
 	"blockbook/bchain/coins/pivx"
+   "blockbook/bchain/coins/veil"
 	"blockbook/bchain/coins/vertcoin"
 	"blockbook/bchain/coins/zec"
 	"blockbook/common"
@@ -62,6 +63,7 @@ func init() {
 	BlockChainFactories["Groestlcoin Testnet"] = grs.NewGroestlcoinRPC
 	BlockChainFactories["PIVX"] = pivx.NewPivxRPC
 	BlockChainFactories["PIVX Testnet"] = pivx.NewPivxRPC
+   BlockChainFactories["Veil Testnet"] = veil.NewVeilRPC
 }
 
 // GetCoinNameFromConfig gets coin name and coin shortcut from config file
