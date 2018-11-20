@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/css/main.css">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="TREZOR {{.CoinLabel}} Explorer">
-    <title>TREZOR {{.CoinLabel}} Explorer</title>
+    <meta name="description" content="{{.CoinName}} Explorer">
+    <title>{{.CoinName}} Explorer</title>
 </head>
 
 <body>
@@ -16,7 +16,7 @@
         <div class="container">
             <nav class="navbar navbar-expand navbar-dark bg-trezor">
                 <a class="navbar-brand" href="/" title="Home">
-                    <div alt="TREZOR Wallet" class="trezor-logo-svg-white">
+                    <div alt="Veil Logo" class="trezor-logo-svg-white">
                         <img src="/static/veil.png" height="42" />
                     </div>
                 </a>
@@ -38,6 +38,14 @@
                     </form>
                 </span>
                 {{- end -}}
+                <ul class="navbar-nav flex-row ml-md-auto d-none d-lg-flex ">
+                    <li class="nav-item">
+                        <a href="https://veil-project.com/" class="nav-link" target="_blank">Veil Project</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="https://veil-project.com/" class="nav-link" target="_blank">Veil Labs</a>
+                    </li>
+                </ul>
             </nav>
         </div>
     </header>
@@ -51,12 +59,17 @@
             <nav class="navbar navbar-expand-lg navbar-dark bg-trezor">
                 <ul class="navbar-nav flex-row">
                     <li class="nav-item">
-                        <a class="nav-link" href="#" target="_blank" rel="noopener noreferrer">© 2018 Random.Zebra</a>
+                        <a class="nav-link" href="https://github.com/random-zebra" target="_blank" rel="noopener noreferrer">© 2018 Random.Zebra</a>
                     </li>
                 </ul>
                 <span class="d-none ml-md-auto d-md-flex navbar-form navbar-nav">
-                    <a href="/sendtx" class="nav-link">Send Transaction</a>
+                    <a href="/sendtx" class="nav-link active">Send Transaction</a>
                 </span>
+                <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
+                    <li class="nav-item">
+                        <a class="nav-link" target="_blank" rel="noopener noreferrer" href="http://trezor.io">made with TREZOR Blockbook</a>
+                    </li>
+                </ul>
             </nav>
         </div>
     </footer>
