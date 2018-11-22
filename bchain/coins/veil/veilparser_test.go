@@ -5,9 +5,13 @@ package veil
 import (
 	"blockbook/bchain"
    "blockbook/bchain/coins/btc"
+   "bytes"
 	"encoding/hex"
+   "fmt"
+   "io/ioutil"
 	"math/big"
 	"os"
+   "path/filepath"
 	"reflect"
 	"testing"
 
@@ -152,20 +156,20 @@ func Test_GetAddressesFromAddrDesc(t *testing.T) {
 var (
 	testTx bchain.Tx
 
-	testTxPacked = "0007c91a8bbf89f92002000000000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0602f401020603ffffffff010100f2052a010000002321031aa8a5e1f85a6d902bdb7d8464f7213e0ffe62e5c81d4929c4d7e0a1f698f7aaac"
+	testTxPacked = "0007c91a8bbf9e8e0802000000000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0602c800022010ffffffff010100f2052a010000002321024870d405ffe8e8a290aa480499aef7e4d1e3481c6ddddf721230ddaa5c367097ac"
 )
 
 func init() {
 
 	testTx = bchain.Tx{
-		Hex:       "02000000000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0602f401020603ffffffff010100f2052a010000002321031aa8a5e1f85a6d902bdb7d8464f7213e0ffe62e5c81d4929c4d7e0a1f698f7aaac",
-		Blocktime: 1542536784,
-		Txid:      "0d2db76f180ac60d5f8087248489d3af9d02a611f6a5ab1e2da9883cc08d2f1d",
+		Hex:       "02000000000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0602c800022010ffffffff010100f2052a010000002321024870d405ffe8e8a290aa480499aef7e4d1e3481c6ddddf721230ddaa5c367097ac",
+		Blocktime: 1542701956,
+		Txid:      "fb18c4c91d47e7dcda657e41f54ac349c7f33d246385d8591b2f4d3117a615d4",
 		LockTime:  0,
 		Version:   2,
 		Vin: []bchain.Vin{
 			{
-            Coinbase: "02f401020603",
+            Coinbase: "02c800022010",
             Sequence: 4294967295,
 			},
 		},
@@ -174,9 +178,9 @@ func init() {
 				ValueSat: *big.NewInt(5000000000),
 				N:        0,
 				ScriptPubKey: bchain.ScriptPubKey{
-					Hex: "21031aa8a5e1f85a6d902bdb7d8464f7213e0ffe62e5c81d4929c4d7e0a1f698f7aaac",
+					Hex: "21024870d405ffe8e8a290aa480499aef7e4d1e3481c6ddddf721230ddaa5c367097ac",
 					Addresses: []string{
-						"mmiS4Yy8mJv7XLGUH3qCbwdMkaihxW5mqL",
+						"n3QLkstMZYjWxqQnhZT8NV26TuTjm4Hz2W",
 					},
 				},
 			},
@@ -202,7 +206,7 @@ func Test_PackTx(t *testing.T) {
 			args: args{
 				tx:        testTx,
 				height:    510234,
-				blockTime: 1542536784,
+				blockTime: 1542701956,
 				parser:    NewVeilParser(GetChainParams("test"), &btc.Configuration{}),
 			},
 			want:    testTxPacked,
@@ -262,5 +266,72 @@ func Test_UnpackTx(t *testing.T) {
 				t.Errorf("unpackTx() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
+	}
+}
+
+type testBlock struct {
+	size int
+	time int64
+	txs  []string
+}
+
+var testParseBlockTxs = map[int]testBlock{
+	200: testBlock{
+		size: 407,
+		time: 1542701956,
+		txs: []string{
+			"fb18c4c91d47e7dcda657e41f54ac349c7f33d246385d8591b2f4d3117a615d4",
+		},
+	},
+}
+
+func helperLoadBlock(t *testing.T, height int) []byte {
+	name := fmt.Sprintf("block_dump.%d", height)
+	path := filepath.Join("testdata", name)
+
+	d, err := ioutil.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	d = bytes.TrimSpace(d)
+
+	b := make([]byte, hex.DecodedLen(len(d)))
+	_, err = hex.Decode(b, d)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return b
+}
+
+func TestParseBlock(t *testing.T) {
+	p := NewVeilParser(GetChainParams("test"), &btc.Configuration{})
+
+	for height, tb := range testParseBlockTxs {
+		b := helperLoadBlock(t, height)
+
+		blk, err := p.ParseBlock(b)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if blk.Size != tb.size {
+			t.Errorf("ParseBlock() block size: got %d, want %d", blk.Size, tb.size)
+		}
+
+		if blk.Time != tb.time {
+			t.Errorf("ParseBlock() block time: got %d, want %d", blk.Time, tb.time)
+		}
+
+		if len(blk.Txs) != len(tb.txs) {
+			t.Errorf("ParseBlock() number of transactions: got %d, want %d", len(blk.Txs), len(tb.txs))
+		}
+
+		for ti, tx := range tb.txs {
+			if blk.Txs[ti].Txid != tx {
+				t.Errorf("ParseBlock() transaction %d: got %s, want %s", ti, blk.Txs[ti].Txid, tx)
+			}
+		}
 	}
 }
