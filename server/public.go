@@ -129,6 +129,7 @@ func (s *PublicServer) ConnectFullPublicInterface() {
 	serveMux.HandleFunc(path+"api/tx/", s.jsonHandler(s.apiTx))
 	serveMux.HandleFunc(path+"api/tx-specific/", s.jsonHandler(s.apiTxSpecific))
 	serveMux.HandleFunc(path+"api/address/", s.jsonHandler(s.apiAddress))
+	serveMux.HandleFunc(path+"api/utxo/", s.jsonHandler(s.apiAddressUtxo))
 	serveMux.HandleFunc(path+"api/block/", s.jsonHandler(s.apiBlock))
 	serveMux.HandleFunc(path+"api/sendtx/", s.jsonHandler(s.apiSendTx))
 	serveMux.HandleFunc(path+"api/estimatefee/", s.jsonHandler(s.apiEstimateFee))
@@ -683,6 +684,24 @@ func (s *PublicServer) apiAddress(r *http.Request) (interface{}, error) {
 		address, err = s.api.GetAddress(r.URL.Path[i+1:], page, txsInAPI, true)
 	}
 	return address, err
+}
+
+func (s *PublicServer) apiAddressUtxo(r *http.Request) (interface{}, error) {
+	var utxo []api.AddressUtxo
+	var err error
+	s.metrics.ExplorerViews.With(common.Labels{"action": "api-address"}).Inc()
+	if i := strings.LastIndexByte(r.URL.Path, '/'); i > 0 {
+		onlyConfirmed := false
+		c := r.URL.Query().Get("confirmed")
+		if len(c) > 0 {
+			onlyConfirmed, err = strconv.ParseBool(c)
+			if err != nil {
+				return nil, api.NewAPIError("Parameter 'confirmed' cannot be converted to boolean", true)
+			}
+		}
+		utxo, err = s.api.GetAddressUtxo(r.URL.Path[i+1:], onlyConfirmed)
+	}
+	return utxo, err
 }
 
 func (s *PublicServer) apiBlock(r *http.Request) (interface{}, error) {

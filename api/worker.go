@@ -45,7 +45,7 @@ func (w *Worker) getAddressesFromVout(vout *bchain.Vout) (bchain.AddressDescript
 }
 
 // setSpendingTxToVout is helper function, that finds transaction that spent given output and sets it to the output
-// there is not an index, it must be found using addresses -> txaddresses -> tx
+// there is no direct index for the operation, it must be found using addresses -> txaddresses -> tx
 func (w *Worker) setSpendingTxToVout(vout *Vout, txid string, height uint32) error {
 	err := w.db.GetAddrDescTransactions(vout.ScriptPubKey.AddrDesc, height, ^uint32(0), func(t string, index uint32, isOutput bool) error {
 		if isOutput == false {
@@ -102,12 +102,13 @@ func (w *Worker) GetTransaction(txid string, spendingTxs bool) (*Tx, error) {
 	if err != nil {
 		return nil, NewAPIError(fmt.Sprintf("Tx not found, %v", err), true)
 	}
-	ta, err := w.db.GetTxAddresses(txid)
-	if err != nil {
-		return nil, errors.Annotatef(err, "GetTxAddresses %v", txid)
-	}
+	var ta *db.TxAddresses
 	var blockhash string
 	if bchainTx.Confirmations > 0 {
+		ta, err = w.db.GetTxAddresses(txid)
+		if err != nil {
+			return nil, errors.Annotatef(err, "GetTxAddresses %v", txid)
+		}
 		blockhash, err = w.db.GetBlockHash(height)
 		if err != nil {
 			return nil, errors.Annotatef(err, "GetBlockHash %v", height)
@@ -221,7 +222,7 @@ func (w *Worker) GetTransaction(txid string, spendingTxs bool) (*Tx, error) {
 
 func (w *Worker) getAddressTxids(addrDesc bchain.AddressDescriptor, mempool bool) ([]string, error) {
 	var err error
-	txids := make([]string, 0)
+	txids := make([]string, 0, 4)
 	if !mempool {
 		err = w.db.GetAddrDescTransactions(addrDesc, 0, ^uint32(0), func(txid string, vout uint32, isOutput bool) error {
 			txids = append(txids, txid)
@@ -473,6 +474,131 @@ func (w *Worker) GetAddress(address string, page int, txsOnPage int, onlyTxids b
 		Txids:                   txids,
 	}
 	glog.Info("GetAddress ", address, " finished in ", time.Since(start))
+	return r, nil
+}
+
+// GetAddressUtxo returns unspent outputs for given address
+func (w *Worker) GetAddressUtxo(address string, onlyConfirmed bool) ([]AddressUtxo, error) {
+	start := time.Now()
+	addrDesc, err := w.chainParser.GetAddrDescFromAddress(address)
+	if err != nil {
+		return nil, NewAPIError(fmt.Sprintf("Invalid address, %v", err), true)
+	}
+	spentInMempool := make(map[string]struct{})
+	r := make([]AddressUtxo, 0, 8)
+	if !onlyConfirmed {
+		// get utxo from mempool
+		txm, err := w.getAddressTxids(addrDesc, true)
+		if err != nil {
+			return nil, errors.Annotatef(err, "getAddressTxids %v true", address)
+		}
+		txm = UniqueTxidsInReverse(txm)
+		mc := make([]*bchain.Tx, len(txm))
+		for i, txid := range txm {
+			// get mempool txs and process their inputs to detect spends between mempool txs
+			bchainTx, _, err := w.txCache.GetTransaction(txid)
+			// mempool transaction may fail
+			if err != nil {
+				glog.Error("GetTransaction in mempool ", txid, ": ", err)
+			} else {
+				mc[i] = bchainTx
+				// get outputs spent by the mempool tx
+				for i := range bchainTx.Vin {
+					vin := &bchainTx.Vin[i]
+					spentInMempool[vin.Txid+strconv.Itoa(int(vin.Vout))] = struct{}{}
+				}
+			}
+		}
+		for _, bchainTx := range mc {
+			if bchainTx != nil {
+				for i := range bchainTx.Vout {
+					vout := &bchainTx.Vout[i]
+					vad, err := w.chainParser.GetAddrDescFromVout(vout)
+					if err == nil && bytes.Equal(addrDesc, vad) {
+						// report only outpoints that are not spent in mempool
+						_, e := spentInMempool[bchainTx.Txid+strconv.Itoa(i)]
+						if !e {
+							r = append(r, AddressUtxo{
+								Txid:      bchainTx.Txid,
+								Vout:      uint32(i),
+								AmountSat: vout.ValueSat,
+								Amount:    w.chainParser.AmountToDecimalString(&vout.ValueSat),
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+	// get utxo from index
+	ba, err := w.db.GetAddrDescBalance(addrDesc)
+	if err != nil {
+		return nil, NewAPIError(fmt.Sprintf("Address not found, %v", err), true)
+	}
+	var checksum big.Int
+	// ba can be nil if the address is only in mempool!
+	if ba != nil && ba.BalanceSat.Uint64() > 0 {
+		type outpoint struct {
+			txid string
+			vout uint32
+		}
+		outpoints := make([]outpoint, 0, 8)
+		err = w.db.GetAddrDescTransactions(addrDesc, 0, ^uint32(0), func(txid string, vout uint32, isOutput bool) error {
+			if isOutput {
+				outpoints = append(outpoints, outpoint{txid, vout})
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		var lastTxid string
+		var ta *db.TxAddresses
+		checksum = ba.BalanceSat
+		b, _, err := w.db.GetBestBlock()
+		if err != nil {
+			return nil, err
+		}
+		bestheight := int(b)
+		for i := len(outpoints) - 1; i >= 0 && checksum.Int64() > 0; i-- {
+			o := outpoints[i]
+			if lastTxid != o.txid {
+				ta, err = w.db.GetTxAddresses(o.txid)
+				if err != nil {
+					return nil, err
+				}
+				lastTxid = o.txid
+			}
+			if ta == nil {
+				glog.Warning("DB inconsistency:  tx ", o.txid, ": not found in txAddresses")
+			} else {
+				if len(ta.Outputs) <= int(o.vout) {
+					glog.Warning("DB inconsistency:  txAddresses ", o.txid, " does not have enough outputs")
+				} else {
+					if !ta.Outputs[o.vout].Spent {
+						v := ta.Outputs[o.vout].ValueSat
+						// report only outpoints that are not spent in mempool
+						_, e := spentInMempool[o.txid+strconv.Itoa(int(o.vout))]
+						if !e {
+							r = append(r, AddressUtxo{
+								Txid:          o.txid,
+								Vout:          o.vout,
+								AmountSat:     v,
+								Amount:        w.chainParser.AmountToDecimalString(&v),
+								Height:        int(ta.Height),
+								Confirmations: bestheight - int(ta.Height) + 1,
+							})
+						}
+						checksum.Sub(&checksum, &v)
+					}
+				}
+			}
+		}
+	}
+	if checksum.Uint64() != 0 {
+		glog.Warning("DB inconsistency:  ", address, ": checksum is not zero")
+	}
+	glog.Info("GetAddressUtxo ", address, ", ", len(r), " utxos, finished in ", time.Since(start))
 	return r, nil
 }
 
