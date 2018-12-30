@@ -23,10 +23,15 @@
     "package_revision": "satoshilabs-1",
     "system_user": "veil",
     "version": "0.0.1",
-    "binary_url": "https://github.com/random-zebra/electrum-pivx/releases/download/vbins/veilbins.zip",
+    "binary_url": "https://github.com/Veil-Project/veil/releases/download/testnet-9/veil-0.0.9-x86_64-linux-gnu.tar.gz",
     "verification_type": "sha256",
-    "verification_source": "fd1aae32e4277f813d9923efe88490a75ace2ef57531eb613f16f31609460dc5",
-    "extract_command": "unzip -d backend",
+    "verification_source": "e9b508686260d122cd47129a9adba6a7cfa9a385ac4ff1482b736d7ec92df1f5",
+    "extract_command": "tar -C backend --strip 1 -xf",
+    "exclude_files": [
+        "bin/test_veil",
+        "bin/veil-qt",
+        "bin/veil-tx"
+    ],
     "exec_command_template": "{{.Env.BackendInstallPath}}/{{.Coin.Alias}}/bin/veild -datadir={{.Env.BackendDataPath}}/{{.Coin.Alias}}/backend -conf={{.Env.BackendInstallPath}}/{{.Coin.Alias}}/{{.Coin.Alias}}.conf -pid=/run/{{.Coin.Alias}}/{{.Coin.Alias}}.pid",
     "logrotate_files_template": "{{.Env.BackendDataPath}}/{{.Coin.Alias}}/backend/*.log",
     "postinst_script_template": "",
