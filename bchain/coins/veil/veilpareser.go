@@ -46,6 +46,7 @@ func init() {
    MainNetParams.PubKeyHashAddrID = []byte{70}
    MainNetParams.ScriptHashAddrID = []byte{5}
    MainNetParams.PrivateKeyID = []byte{128}
+   MainNetParams.Bech32HRPSegwit = "bv"
 
    // Veil testnet Address encoding magics
    TestNetParams = chaincfg.TestNet3Params
@@ -53,6 +54,7 @@ func init() {
    TestNetParams.PubKeyHashAddrID = []byte{111}
    TestNetParams.ScriptHashAddrID = []byte{196}
    TestNetParams.PrivateKeyID = []byte{239}
+   TestNetParams.Bech32HRPSegwit = "tv"
 }
 
 // VeilParser handle
