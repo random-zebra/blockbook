@@ -22,18 +22,23 @@
     "package_name": "backend-veil",
     "package_revision": "satoshilabs-1",
     "system_user": "veil",
-    "version": "0.0.1",
-    "binary_url": "https://github.com/random-zebra/electrum-pivx/releases/download/vbins/veilbins.zip",
+    "version": "1.0.0.1",
+    "binary_url": "https://github.com/Veil-Project/veil/releases/download/v1.0.0.1/veil-1.0.0-x86_64-linux-gnu.tar.gz",
     "verification_type": "sha256",
-    "verification_source": "fd1aae32e4277f813d9923efe88490a75ace2ef57531eb613f16f31609460dc5",
-    "extract_command": "unzip -d backend",
+    "verification_source": "8558a0cc61f8d70872c5ba5242980d376387222ae07a992973dd2663959f1023",
+    "extract_command": "tar -C backend --strip 1 -xf",
+    "exclude_files": [
+        "bin/test_veil",
+        "bin/veil-qt",
+        "bin/veil-tx"
+    ],
     "exec_command_template": "{{.Env.BackendInstallPath}}/{{.Coin.Alias}}/bin/veild -datadir={{.Env.BackendDataPath}}/{{.Coin.Alias}}/backend -conf={{.Env.BackendInstallPath}}/{{.Coin.Alias}}/{{.Coin.Alias}}.conf -pid=/run/{{.Coin.Alias}}/{{.Coin.Alias}}.pid",
     "logrotate_files_template": "{{.Env.BackendDataPath}}/{{.Coin.Alias}}/backend/*.log",
     "postinst_script_template": "",
     "service_type": "forking",
     "service_additional_params_template": "",
     "protect_memory": true,
-    "mainnet": false,
+    "mainnet": true,
     "server_config_file": "bitcoin_like.conf",
     "client_config_file": "bitcoin_like_client.conf",
     "additional_params": {
@@ -41,7 +46,7 @@
     }
   },
   "blockbook": {
-    "package_name": "blockbook-veil-testnet",
+    "package_name": "blockbook-veil",
     "system_user": "blockbook-veil",
     "internal_binding_template": ":{{.Ports.BlockbookInternal}}",
     "public_binding_template": ":{{.Ports.BlockbookPublic}}",
