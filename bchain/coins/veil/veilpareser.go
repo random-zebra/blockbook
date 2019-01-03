@@ -31,7 +31,8 @@ const (
 
    // Labels
    ZEROCOIN_LABEL = "Zerocoin Accumulator"
-   STAKE_LABEL = "Proof of Stake TX"
+   //STAKE_LABEL = "Proof of Stake TX"
+   STAKE_LABEL = "DATA"
 )
 
 var (

@@ -19,6 +19,13 @@ const (
    maxTxInPerMessage = (wire.MaxMessagePayload / minTxInPayload) + 1
    maxTxOutPerMessage = (wire.MaxMessagePayload / MinTxOutPayload) + 1
    maxWitnessItemsPerInput = 500000
+
+   // output Types
+   OUTPUT_NULL             = 0 // marker for CCoinsView (0.14)
+   OUTPUT_STANDARD         = 1
+   OUTPUT_CT               = 2
+   OUTPUT_RINGCT           = 3
+   OUTPUT_DATA             = 4
 )
 
 // Extend Wire structs
@@ -350,19 +357,56 @@ func readTxIn(r io.Reader, ti *wire.TxIn) error {
 // readTxOut reads the next sequence of bytes from r as a transaction output
 // (TxOut).
 func readTxOut(r io.Reader, to *wire.TxOut) (uint8, error) {
+   // initialize value at zero
+   to.Value = 0
    // read TxOut type
    outType, err := Uint8(r)
    if err != nil {
       return 0, err
    }
 
-	err = readElement(r, &to.Value)
-	if err != nil {
-		return 0, err
-	}
+   switch outType {
+   case OUTPUT_CT:
+      _ , err = readScript(r)             // commitment data
+      if err != nil {
+         break
+      }
+      _ , err = readScript(r)             // vdata
+      if err != nil {
+         break
+      }
+      to.PkScript , err = readScript(r)   // scriptPubKey
+      if err != nil {
+         break
+      }
+      _ , err = readScript(r)             // vRangeproof
 
-	to.PkScript, err = readScript(r)
-	return outType, err
+   case OUTPUT_RINGCT:
+      _ , err = readScript(r)             // pk
+      if err != nil {
+         break
+      }
+      _ , err = readScript(r)             // commitment data
+      if err != nil {
+         break
+      }
+      _ , err = readScript(r)             // vdata
+      if err != nil {
+         break
+      }
+      _ , err = readScript(r)             // vRangeproof
+
+   case OUTPUT_DATA:
+      _ , err = readScript(r)             // vdata
+
+   default: // OUTPUT_STANDARD
+      err = readElement(r, &to.Value)
+   	if err != nil {
+   		break
+   	}
+      to.PkScript, err = readScript(r)
+   }
+   return outType, err
 }
 
 // Uint8 reads one byte from the provided reader and
@@ -532,7 +576,7 @@ func readElement(r io.Reader, element interface{}) error {
 		return nil
 
    // Hash.
-case *chainhash.Hash:
+   case *chainhash.Hash:
 		_, err := io.ReadFull(r, e[:])
 		if err != nil {
 			return err

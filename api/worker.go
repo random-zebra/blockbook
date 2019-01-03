@@ -123,10 +123,10 @@ func (w *Worker) GetTransaction(txid string, spendingTxs bool) (*Tx, error) {
 		vin.N = i
 		vin.Vout = bchainVin.Vout
 		vin.Sequence = int64(bchainVin.Sequence)
-		vin.ScriptSig.Hex = bchainVin.ScriptSig.Hex
-		//  bchainVin.Txid=="" is coinbase transaction
-		if bchainVin.Txid != "" {
-			// load spending addresses from TxAddresses
+		//  bchainVin.Txid=="" or 0 is coinbase transaction
+		if bchainVin.Txid != "" && bchainVin.Txid != "0000000000000000000000000000000000000000000000000000000000000000" {
+         vin.ScriptSig.Hex = bchainVin.ScriptSig.Hex
+         // load spending addresses from TxAddresses
 			tas, err := w.db.GetTxAddresses(bchainVin.Txid)
 			if err != nil {
 				return nil, errors.Annotatef(err, "GetTxAddresses %v", bchainVin.Txid)
