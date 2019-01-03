@@ -26,13 +26,13 @@ const (
    OP_ZEROCOINMINT  = 0xc1
    OP_ZEROCOINSPEND  = 0xc2
 
-   // Dummy Internal Address for Stakes outputs
-   STAKE_ADDR_INT = 0xf7
+   // Dummy Internal Addresses
+   DATA_ADDR_INT = 0xf7
 
    // Labels
    ZEROCOIN_LABEL = "Zerocoin Accumulator"
    //STAKE_LABEL = "Proof of Stake TX"
-   STAKE_LABEL = "DATA"
+   DATA_LABEL = "DATA"
 )
 
 var (
@@ -93,7 +93,7 @@ func GetChainParams(chain string) *chaincfg.Params {
 func (p *VeilParser) GetAddrDescFromVout(output *bchain.Vout) (bchain.AddressDescriptor, error) {
    // Stake first output
    if output.ScriptPubKey.Hex == "" {
-      return bchain.AddressDescriptor{STAKE_ADDR_INT}, nil
+      return bchain.AddressDescriptor{DATA_ADDR_INT}, nil
   	}
    // zerocoin mint output
    if len(output.ScriptPubKey.Hex) > 1 && output.ScriptPubKey.Hex[:2] == hex.EncodeToString([]byte{OP_ZEROCOINMINT}) {
@@ -122,8 +122,8 @@ func (p *VeilParser) GetAddressesFromAddrDesc(addrDesc bchain.AddressDescriptor)
 // addressToOutputScript converts Veil address to ScriptPubKey
 func (p *VeilParser) addressToOutputScript(address string) ([]byte, error) {
    // dummy address for stake output
-   if address == STAKE_LABEL {
-      return bchain.AddressDescriptor{STAKE_ADDR_INT}, nil
+   if address == DATA_LABEL {
+      return bchain.AddressDescriptor{DATA_ADDR_INT}, nil
 	}
    // dummy address for zerocoin mint output
    if address == ZEROCOIN_LABEL {
@@ -149,8 +149,8 @@ func (p *VeilParser) outputScriptToAddresses(script []byte) ([]string, bool, err
    }
 
    // coinstake tx output
-   if len(script) > 0 && script[0] == STAKE_ADDR_INT {
-      return []string{STAKE_LABEL}, false, nil
+   if len(script) > 0 && script[0] == DATA_ADDR_INT {
+      return []string{DATA_LABEL}, false, nil
    }
 
    // zerocoin mint output
@@ -221,7 +221,7 @@ func (p *VeilParser) TxFromMsgTx(t *wire.MsgTx, tx *Tx, parseAddresses bool) bch
             addrs, _, _ = p.OutputScriptToAddressesFunc(out.PkScript)
          } else {
          // stake tx script
-         addrs = []string{STAKE_LABEL}
+         addrs = []string{DATA_LABEL}
          }
       }
 
