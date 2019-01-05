@@ -120,6 +120,19 @@ func (p *VeilRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
    return p.GetTransaction(txid)
 }
 
+// GetTransaction returns a transaction by the transaction ID.
+func (p *VeilRPC) GetTransaction(txid string) (*bchain.Tx, error) {
+	r, err := p.GetTransactionSpecific(txid)
+	if err != nil {
+		return nil, err
+	}
+	tx, err := p.Parser.ParseTxFromJson(r)
+	if err != nil {
+		return nil, errors.Annotatef(err, "txid %v", txid)
+	}
+	return tx, nil
+}
+
 // GetMempoolEntry returns mempool data for given transaction
 func (p *VeilRPC) GetMempoolEntry(txid string) (*bchain.MempoolEntry, error) {
    return nil, errors.New("GetMempoolEntry: not implemented")

@@ -6,6 +6,7 @@ import (
    "bytes"
    "encoding/binary"
    "encoding/hex"
+   "encoding/json"
    "math/big"
 
    vlq "github.com/bsm/go-vlq"
@@ -27,12 +28,16 @@ const (
    OP_ZEROCOINSPEND  = 0xc2
 
    // Dummy Internal Addresses
-   DATA_ADDR_INT = 0xf7
+   STAKE_ADDR_INT = 0xf7
+   RINGCT_ADDR_INT = 0xf8
+   CTDATA_ADDR_INT = 0xf9
 
    // Labels
    ZEROCOIN_LABEL = "Zerocoin Accumulator"
-   //STAKE_LABEL = "Proof of Stake TX"
-   DATA_LABEL = "DATA"
+   STAKE_LABEL = "Proof of Stake TX"
+   //DATA_LABEL = "DATA"
+   RINGCT_LABEL = "RingCT"
+   CTDATA_LABEL = "Rangeproof"
 )
 
 var (
@@ -91,10 +96,19 @@ func GetChainParams(chain string) *chaincfg.Params {
 
 // GetAddrDescFromVout returns internal address representation (descriptor) of given transaction output
 func (p *VeilParser) GetAddrDescFromVout(output *bchain.Vout) (bchain.AddressDescriptor, error) {
-   // Stake first output
+   // RingCT output
+   if output.Type == OUTPUT_RINGCT {
+      return bchain.AddressDescriptor{RINGCT_ADDR_INT}, nil
+   }
+
    if output.ScriptPubKey.Hex == "" {
-      return bchain.AddressDescriptor{DATA_ADDR_INT}, nil
+      if output.Type == OUTPUT_DATA {
+         return bchain.AddressDescriptor{CTDATA_ADDR_INT}, nil
+      }
+      // Stake first output
+      return bchain.AddressDescriptor{STAKE_ADDR_INT}, nil
   	}
+
    // zerocoin mint output
    if len(output.ScriptPubKey.Hex) > 1 && output.ScriptPubKey.Hex[:2] == hex.EncodeToString([]byte{OP_ZEROCOINMINT}) {
       return bchain.AddressDescriptor{OP_ZEROCOINMINT}, nil
@@ -122,13 +136,22 @@ func (p *VeilParser) GetAddressesFromAddrDesc(addrDesc bchain.AddressDescriptor)
 // addressToOutputScript converts Veil address to ScriptPubKey
 func (p *VeilParser) addressToOutputScript(address string) ([]byte, error) {
    // dummy address for stake output
-   if address == DATA_LABEL {
-      return bchain.AddressDescriptor{DATA_ADDR_INT}, nil
+   if address == STAKE_LABEL {
+      return bchain.AddressDescriptor{STAKE_ADDR_INT}, nil
 	}
    // dummy address for zerocoin mint output
    if address == ZEROCOIN_LABEL {
       return bchain.AddressDescriptor{OP_ZEROCOINMINT}, nil
    }
+   // dummy address for RingCT output
+   if address == RINGCT_LABEL {
+      return bchain.AddressDescriptor{RINGCT_ADDR_INT}, nil
+   }
+   // dummy address for Rangeproof output
+   if address == CTDATA_LABEL {
+      return bchain.AddressDescriptor{CTDATA_ADDR_INT}, nil
+   }
+
    // regular address
    da, err := btcutil.DecodeAddress(address, p.Params)
    if err != nil {
@@ -149,8 +172,18 @@ func (p *VeilParser) outputScriptToAddresses(script []byte) ([]string, bool, err
    }
 
    // coinstake tx output
-   if len(script) > 0 && script[0] == DATA_ADDR_INT {
-      return []string{DATA_LABEL}, false, nil
+   if len(script) > 0 && script[0] == STAKE_ADDR_INT {
+      return []string{STAKE_LABEL}, false, nil
+   }
+
+   // ringCT output
+   if len(script) > 0 && script[0] == RINGCT_ADDR_INT {
+      return []string{RINGCT_LABEL}, false, nil
+   }
+
+   // rangeproof output
+   if len(script) > 0 && script[0] == CTDATA_ADDR_INT {
+      return []string{CTDATA_LABEL}, false, nil
    }
 
    // zerocoin mint output
@@ -220,8 +253,16 @@ func (p *VeilParser) TxFromMsgTx(t *wire.MsgTx, tx *Tx, parseAddresses bool) bch
          if len(out.PkScript) > 0 {
             addrs, _, _ = p.OutputScriptToAddressesFunc(out.PkScript)
          } else {
-         // stake tx script
-         addrs = []string{DATA_LABEL}
+            if tx.outTypes[i] == OUTPUT_RINGCT {
+               // ringCT output
+               addrs = []string{RINGCT_LABEL}
+            } else if tx.outTypes[i] == OUTPUT_DATA {
+               // Rangeproof
+               addrs = []string{CTDATA_LABEL}
+            } else {
+               // data output
+               addrs = []string{STAKE_LABEL}
+            }
          }
       }
 
@@ -236,6 +277,7 @@ func (p *VeilParser) TxFromMsgTx(t *wire.MsgTx, tx *Tx, parseAddresses bool) bch
          N:            uint32(i),
          ScriptPubKey: s,
          ValueSat:	  vs,
+         Type:         tx.outTypes[i],
       }
    }
 
@@ -324,4 +366,39 @@ func TryParseOPZerocoinMint(script []byte) string {
       return ZEROCOIN_LABEL
    }
    return ""
+}
+
+// ParseTxFromJson parses JSON message containing transaction and returns Tx struct
+func (p *VeilParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
+	var tx bchain.Tx
+	err := json.Unmarshal(msg, &tx)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range tx.Vout {
+		vout := &tx.Vout[i]
+		// convert vout.JsonValue to big.Int and clear it, it is only temporary value used for unmarshal
+		vout.ValueSat, err = p.AmountToBigInt(vout.JsonValue)
+      // convert type string to number
+      switch vout.Type_str {
+      case "null" :
+         vout.Type = OUTPUT_NULL
+      case "blind" :
+         vout.Type = OUTPUT_CT
+      case "ringct" :
+         vout.Type = OUTPUT_RINGCT
+      case "data" :
+         vout.Type = OUTPUT_DATA
+      default:
+         vout.Type = OUTPUT_STANDARD
+      }
+
+		if err != nil {
+			return nil, err
+		}
+		vout.JsonValue = ""
+	}
+
+	return &tx, nil
 }

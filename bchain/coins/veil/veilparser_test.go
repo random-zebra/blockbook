@@ -183,6 +183,7 @@ func init() {
 						"n3QLkstMZYjWxqQnhZT8NV26TuTjm4Hz2W",
 					},
 				},
+            Type: 1,
 			},
 		},
 	}

@@ -24,10 +24,16 @@
                                     {{if and (ne $a $addr) $vin.Searchable}}<a href="/address/{{$a}}">{{$a}}</a>{{else}}{{$a}}{{end}}
                                     </span>
                                 {{- else -}}
-                                <span class="float-left">{{- if $vin.ScriptSig.Hex -}}Unparsed address{{- else -}}No Inputs (Newly Generated Coins){{- end -}}</span>
+                                <span class="float-left">No Inputs (Newly Generated Coins)</span>
                                 {{- end -}}{{- if $vin.Addresses -}}
-                                <span class="float-right{{if stringInSlice $addr $vin.Addresses}} text-danger{{end}}">{{formatAmount $vin.Value}} {{$cs}}</span>
-                                {{- end -}}
+                                <span class="float-right{{if stringInSlice $addr $vin.Addresses}} text-danger{{end}}">
+                                   {{- if eq (formatAmount $vin.Value) "0" -}}
+                                       <em>Hidden Amount</em>
+                                   {{- else -}}
+                                       {{formatAmount $vin.Value}} {{$cs}}
+                                   {{- end -}}
+                               {{- end -}}
+                               </span>
                             </td>
                         </tr>
                         {{- else -}}
@@ -60,7 +66,7 @@
                                 {{- end -}}
                                 <span class="float-right{{if stringInSlice $addr $vout.ScriptPubKey.Addresses}} text-success{{end}}">
                                     {{- if eq (formatAmount $vout.Value) "0" -}}
-                                       {{- if ne (index $vout.ScriptPubKey.Addresses 0) "DATA" -}}
+                                       {{- if and (ne (index $vout.ScriptPubKey.Addresses 0) "Proof of Stake TX") (ne (index $vout.ScriptPubKey.Addresses 0) "Rangeproof") -}}
                                           <em>Hidden Amount</em>
                                        {{- end -}}
                                     {{- else -}}

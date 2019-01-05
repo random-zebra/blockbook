@@ -123,8 +123,11 @@ func (w *Worker) GetTransaction(txid string, spendingTxs bool) (*Tx, error) {
 		vin.N = i
 		vin.Vout = bchainVin.Vout
 		vin.Sequence = int64(bchainVin.Sequence)
-		//  bchainVin.Txid=="" or 0 is coinbase transaction
-		if bchainVin.Txid != "" && bchainVin.Txid != "0000000000000000000000000000000000000000000000000000000000000000" {
+      // bchainVin.Txid==0 is zerocoin spend
+      if bchainVin.Txid == "0000000000000000000000000000000000000000000000000000000000000000" {
+         vin.ScriptSig.Hex = "0xc2"
+         // bchainVin.Txid=="" is coinbase transaction
+      } else if bchainVin.Txid != "" {
          vin.ScriptSig.Hex = bchainVin.ScriptSig.Hex
          // load spending addresses from TxAddresses
 			tas, err := w.db.GetTxAddresses(bchainVin.Txid)
