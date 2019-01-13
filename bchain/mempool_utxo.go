@@ -99,7 +99,9 @@ func (m *UTXOMempool) updateMappings(newTxToInputOutput map[string][]addrIndex, 
 func (m *UTXOMempool) getInputAddress(input outpoint) *addrIndex {
 	itx, err := m.chain.GetTransactionForMempool(input.txid)
 	if err != nil {
-		glog.Error("cannot get transaction ", input.txid, ": ", err)
+	    if input.txid != "0000000000000000000000000000000000000000000000000000000000000000" {
+			glog.Error("cannot get transaction ", input.txid, ": ", err)
+		}
 		return nil
 	}
 	if int(input.vout) >= len(itx.Vout) {
@@ -118,7 +120,9 @@ func (m *UTXOMempool) getInputAddress(input outpoint) *addrIndex {
 func (m *UTXOMempool) getTxAddrs(txid string, chanInput chan outpoint, chanResult chan *addrIndex) ([]addrIndex, bool) {
 	tx, err := m.chain.GetTransactionForMempool(txid)
 	if err != nil {
-		glog.Error("cannot get transaction ", txid, ": ", err)
+	    if txid != "0000000000000000000000000000000000000000000000000000000000000000" {
+			glog.Error("cannot get transaction ", txid, ": ", err)
+		}
 		return nil, false
 	}
 	glog.V(2).Info("mempool: gettxaddrs ", txid, ", ", len(tx.Vin), " inputs")
