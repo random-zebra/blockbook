@@ -919,6 +919,7 @@ type BlockInfo struct {
 	Txs    uint32
 	Size   uint32
 	Height uint32 // Height is not packed!
+    Type   uint32 // 1 = PoW, 2 = PoS
 }
 
 func (d *RocksDB) packBlockInfo(block *BlockInfo) ([]byte, error) {
@@ -934,6 +935,7 @@ func (d *RocksDB) packBlockInfo(block *BlockInfo) ([]byte, error) {
 	packed = append(packed, varBuf[:l]...)
 	l = packVaruint(uint(block.Size), varBuf)
 	packed = append(packed, varBuf[:l]...)
+	packed = append(packed, packUint(uint32(block.Type))...)
 	return packed, nil
 }
 
@@ -949,12 +951,14 @@ func (d *RocksDB) unpackBlockInfo(buf []byte) (*BlockInfo, error) {
 	}
 	t := unpackUint(buf[pl:])
 	txs, l := unpackVaruint(buf[pl+4:])
-	size, _ := unpackVaruint(buf[pl+4+l:])
+	size, l2 := unpackVaruint(buf[pl+4+l:])
+    ty := unpackUint(buf[pl+4+l+l2:])
 	return &BlockInfo{
 		Hash: txid,
 		Time: int64(t),
 		Txs:  uint32(txs),
 		Size: uint32(size),
+        Type: uint32(ty),
 	}, nil
 }
 
@@ -1013,6 +1017,7 @@ func (d *RocksDB) writeHeightFromBlock(wb *gorocksdb.WriteBatch, block *bchain.B
 		Txs:    uint32(len(block.Txs)),
 		Size:   uint32(block.Size),
 		Height: block.Height,
+        Type:   uint32(block.Type),
 	}, op)
 }
 

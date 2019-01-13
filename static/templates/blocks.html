@@ -8,11 +8,12 @@
     <table class="table table-striped data-table table-hover">
         <thead>
             <tr>
-                <th style="width: 12%;">Height</th>
-                <th style="width: 45%;">Hash</th>
+                <th style="width: 11%;">Height</th>
+                <th style="width: 46%;">Hash</th>
                 <th>Timestamp</th>
-                <th class="text-right" title="number of Transactions" style="width: 10%;">TXs</th>
-                <th class="text-right"  title="size in Bytes" style="width: 13%;">Size</th>
+                <th class="text-right" style="width: 5%;">Type</th>
+                <th class="text-right" title="number of Transactions" style="width: 9%;">TXs</th>
+                <th class="text-right"  title="size in Bytes" style="width: 12%;">Size</th>
             </tr>
         </thead>
         <tbody>
@@ -21,6 +22,13 @@
                 <td><a href="/block/{{$b.Height}}">{{$b.Height}}</a></td>
                 <td class="ellipsis">{{$b.Hash}}</td>
                 <td>{{formatUnixTime $b.Time}}</td>
+                <td class="text-right">
+                   {{- if eq $b.Type 1 -}}Mined
+                   {{- else -}}
+                     {{- if eq $b.Type 2 -}}Staked
+                     {{- else -}}???{{- end -}}
+                   {{- end -}}
+                </td>
                 <td class="text-right">{{$b.Txs}}</td>
                 <td class="text-right">{{$b.Size}}</td>
             </tr>

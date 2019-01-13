@@ -195,6 +195,7 @@ func (b *BulkConnect) ConnectBlock(block *bchain.Block, storeBlockTxs bool) erro
 			Txs:    uint32(len(block.Txs)),
 			Size:   uint32(block.Size),
 			Height: block.Height,
+            Type:   uint32(block.Type),
 		},
 		addresses: addresses,
 	})

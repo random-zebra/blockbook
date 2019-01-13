@@ -93,9 +93,21 @@ func (g *VeilRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
       }
       txs = append(txs, *tx)
    }
+
+   // block is PoS (type=2) when nonce is zero
+   blocktype := 1
+   bi, err := g.BitcoinRPC.GetBlockInfo(hash)
+   if err != nil {
+      return nil, err
+   }
+   nonce, _ := bi.Nonce.Int64()
+   if nonce == 0 {
+      blocktype = 2
+   }
    block := &bchain.Block{
       BlockHeader: res.Result.BlockHeader,
       Txs:         txs,
+      Type:        blocktype,
    }
    return block, nil
 }
@@ -122,6 +134,9 @@ func (p *VeilRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
 
 // GetTransaction returns a transaction by the transaction ID.
 func (p *VeilRPC) GetTransaction(txid string) (*bchain.Tx, error) {
+   if txid == ZERO_INPUT {
+      return nil, bchain.ErrTxidMissing
+   }
 	r, err := p.GetTransactionSpecific(txid)
 	if err != nil {
 		return nil, err

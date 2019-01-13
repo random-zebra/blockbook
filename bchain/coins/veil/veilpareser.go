@@ -23,6 +23,9 @@ const (
    MainnetMagic wire.BitcoinNet = 0xa3d0cfb6
    TestnetMagic wire.BitcoinNet = 0xc4a7d1a8
 
+   // Dummy TxId for zerocoin
+   ZERO_INPUT = "0000000000000000000000000000000000000000000000000000000000000000"
+
    // Zerocoin op codes
    OP_ZEROCOINMINT  = 0xc1
    OP_ZEROCOINSPEND  = 0xc2
@@ -401,4 +404,12 @@ func (p *VeilParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
 	}
 
 	return &tx, nil
+}
+
+// PackTxid packs txid to byte array
+func (p *VeilParser) PackTxid(txid string) ([]byte, error) {
+   if txid == "" || txid == ZERO_INPUT {
+      return nil, bchain.ErrTxidMissing
+	}
+	return p.BitcoinParser.PackTxid(txid)
 }

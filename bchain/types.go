@@ -71,6 +71,7 @@ type Tx struct {
 type Block struct {
 	BlockHeader
 	Txs []Tx `json:"tx"`
+    Type  int    // 1 = PoW, 2 = PoS
 }
 
 // BlockHeader contains limited data (as needed for indexing) from backend block header

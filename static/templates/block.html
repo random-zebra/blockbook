@@ -16,13 +16,16 @@
     <div class="col-md-6">
         <table class="table data-table">
             <tbody>
-                <tr>
-                    <td style="width: 25%;">Transactions</td>
-                    <td class="data">{{$b.TxCount}}</td>
+               <tr>
+                  <td style="width: 25%;">Block Type</td>
+                  <td class="data">
+                     {{- if ne $b.Nonce "0" -}}Proof of Work
+                     {{- else -}}Proof of Stake{{- end -}}
+                  </td>
                 </tr>
                 <tr>
-                    <td>Height</td>
-                    <td class="data">{{$b.Height}}</td>
+                    <td>Transactions</td>
+                    <td class="data">{{$b.TxCount}}</td>
                 </tr>
                 <tr>
                     <td>Confirmations</td>
