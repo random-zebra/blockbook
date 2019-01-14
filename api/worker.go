@@ -123,7 +123,9 @@ func (w *Worker) GetTransaction(txid string, spendingTxs bool) (*Tx, error) {
 		vin.N = i
 		vin.Vout = bchainVin.Vout
       	vin.Sequence = int64(bchainVin.Sequence)
-      	if bchainVin.Txid == "0000000000000000000000000000000000000000000000000000000000000000" {
+        if bchainVin.Type_str == "anon" {
+            vin.Addresses = []string{"RingCT Anon input"}
+      	} else if bchainVin.Txid == "0000000000000000000000000000000000000000000000000000000000000000" {
         	if bchainVin.Type_str == "zerocoinspend" {
         		// zerocoin spend
         		vin.ScriptSig.Hex = "0xc2"
