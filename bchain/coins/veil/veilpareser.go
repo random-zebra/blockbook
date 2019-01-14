@@ -378,28 +378,29 @@ func (p *VeilParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
 	if err != nil {
 		return nil, err
 	}
+   // fix input (convert to big.Int and clear it)
+   if tx.Vin[0].Denom != "" {
+      tx.Vin[0].DenomSat, _ = p.AmountToBigInt(tx.Vin[0].Denom)
+      tx.Vin[0].Denom = ""
+   }
 
 	for i := range tx.Vout {
 		vout := &tx.Vout[i]
 		// convert vout.JsonValue to big.Int and clear it, it is only temporary value used for unmarshal
 		vout.ValueSat, err = p.AmountToBigInt(vout.JsonValue)
-      // convert type string to number
-      switch vout.Type_str {
-      case "null" :
-         vout.Type = OUTPUT_NULL
-      case "blind" :
-         vout.Type = OUTPUT_CT
-      case "ringct" :
-         vout.Type = OUTPUT_RINGCT
-      case "data" :
-         vout.Type = OUTPUT_DATA
-      default:
-         vout.Type = OUTPUT_STANDARD
-      }
-
-		if err != nil {
-			return nil, err
-		}
+      	// convert type string to number
+      	switch vout.Type_str {
+      	case "null" :
+      		vout.Type = OUTPUT_NULL
+      	case "blind" :
+         	vout.Type = OUTPUT_CT
+      	case "ringct" :
+         	vout.Type = OUTPUT_RINGCT
+      	case "data" :
+         	vout.Type = OUTPUT_DATA
+      	default:
+         	vout.Type = OUTPUT_STANDARD
+      	}
 		vout.JsonValue = ""
 	}
 

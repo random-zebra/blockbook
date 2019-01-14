@@ -16,7 +16,7 @@
                         {{- range $vin := $tx.Vin -}}
                         <tr>
                             <td>
-                                {{- if $vin.Txid -}}
+                                {{- if and $vin.Txid (ne $vin.Txid "0000000000000000000000000000000000000000000000000000000000000000") -}}
                                     <a class="float-left text-muted" href="/tx/{{$vin.Txid}}" title="Outpoint {{$vin.Txid}},{{$vin.Vout}}">➡&nbsp;</a>
                                 {{- end -}}
                                 {{- range $a := $vin.Addresses -}}

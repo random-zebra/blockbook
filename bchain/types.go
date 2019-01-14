@@ -35,6 +35,9 @@ type Vin struct {
 	ScriptSig ScriptSig `json:"scriptSig"`
 	Sequence  uint32    `json:"sequence"`
 	Addresses []string  `json:"addresses"`
+    Denom     json.Number `json:"denomination,omitempty"`
+    DenomSat  big.Int
+    Type_str  string     `json:"type,omitempty"`
 }
 
 type ScriptPubKey struct {

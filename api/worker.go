@@ -122,14 +122,22 @@ func (w *Worker) GetTransaction(txid string, spendingTxs bool) (*Tx, error) {
 		vin.Txid = bchainVin.Txid
 		vin.N = i
 		vin.Vout = bchainVin.Vout
-		vin.Sequence = int64(bchainVin.Sequence)
-      // bchainVin.Txid==0 is zerocoin spend
-      if bchainVin.Txid == "0000000000000000000000000000000000000000000000000000000000000000" {
-         vin.ScriptSig.Hex = "0xc2"
-         // bchainVin.Txid=="" is coinbase transaction
-      } else if bchainVin.Txid != "" {
-         vin.ScriptSig.Hex = bchainVin.ScriptSig.Hex
-         // load spending addresses from TxAddresses
+      	vin.Sequence = int64(bchainVin.Sequence)
+      	if bchainVin.Txid == "0000000000000000000000000000000000000000000000000000000000000000" {
+        	if bchainVin.Type_str == "zerocoinspend" {
+        		// zerocoin spend
+        		vin.ScriptSig.Hex = "0xc2"
+            	vin.Addresses = []string{"Zerocoin Accumulator"}
+            	vin.ValueSat = bchainVin.DenomSat
+         	} else {
+            	// coinbase input
+            	vin.Addresses = []string{"Coinbase (Newly Generated Coins)"}
+            	// !TODO: function to compute block reward dinamically from height
+            	vin.ValueSat = *big.NewInt(5000000000)
+         	}
+      	} else if bchainVin.Txid != "" {
+         	vin.ScriptSig.Hex = bchainVin.ScriptSig.Hex
+         	// load spending addresses from TxAddresses
 			tas, err := w.db.GetTxAddresses(bchainVin.Txid)
 			if err != nil {
 				return nil, errors.Annotatef(err, "GetTxAddresses %v", bchainVin.Txid)
@@ -164,9 +172,9 @@ func (w *Worker) GetTransaction(txid string, spendingTxs bool) (*Tx, error) {
 					}
 				}
 			}
-			vin.Value = w.chainParser.AmountToDecimalString(&vin.ValueSat)
-			valInSat.Add(&valInSat, &vin.ValueSat)
 		}
+      	vin.Value = w.chainParser.AmountToDecimalString(&vin.ValueSat)
+      	valInSat.Add(&valInSat, &vin.ValueSat)
 	}
 	vouts := make([]Vout, len(bchainTx.Vout))
 	for i := range bchainTx.Vout {
@@ -678,7 +686,7 @@ func (w *Worker) GetBlock(bid string, page int, txsOnPage int) (*Block, error) {
 	for i := from; i < to; i++ {
 		txid := bi.Txids[i]
 		ta, err := w.db.GetTxAddresses(txid)
-		if err != nil {
+      	if err != nil {
 			return nil, errors.Annotatef(err, "GetTxAddresses %v", txid)
 		}
 		if ta == nil {
@@ -686,6 +694,13 @@ func (w *Worker) GetBlock(bid string, page int, txsOnPage int) (*Block, error) {
 			continue
 		}
 		txs[txi] = w.txFromTxAddress(txid, ta, dbi, bestheight)
+      	// fix coinbase/zerocoin tx
+      	if txs[txi].Vin[0].Txid == "" {
+        	txs[txi], err = w.GetTransaction(txid, false)
+         	if err != nil {
+            	continue
+         	}
+      	}
 		txi++
 	}
 	txs = txs[:txi]
