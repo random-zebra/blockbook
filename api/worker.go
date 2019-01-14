@@ -132,8 +132,7 @@ func (w *Worker) GetTransaction(txid string, spendingTxs bool) (*Tx, error) {
          	} else {
             	// coinbase input
             	vin.Addresses = []string{"Coinbase (Newly Generated Coins)"}
-            	// !TODO: function to compute block reward dinamically from height
-            	vin.ValueSat = *big.NewInt(5000000000)
+               vin.ValueSat = w.chain.GetBlockSubsidy(height)
          	}
       	} else if bchainVin.Txid != "" {
          	vin.ScriptSig.Hex = bchainVin.ScriptSig.Hex

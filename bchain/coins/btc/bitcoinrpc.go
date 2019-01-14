@@ -877,3 +877,15 @@ func (b *BitcoinRPC) Call(req interface{}, res interface{}) error {
 func (b *BitcoinRPC) GetChainParser() bchain.BlockChainParser {
 	return b.Parser
 }
+
+// GetBlockSubsidy returns the value of coinbase ValueSat at given height
+func (b *BitcoinRPC) GetBlockSubsidy(height uint32) big.Int {
+   var halvings uint32
+   halvings = height / 210000
+   if halvings >= 64 {
+      return *big.NewInt(0)
+   }
+   subsidy := big.NewInt(5000000000)
+   subsidy.Rsh(subsidy, uint(halvings))
+   return *subsidy
+}

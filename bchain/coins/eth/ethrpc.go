@@ -595,3 +595,9 @@ func (b *EthereumRPC) GetMempoolEntry(txid string) (*bchain.MempoolEntry, error)
 func (b *EthereumRPC) GetChainParser() bchain.BlockChainParser {
 	return b.Parser
 }
+
+// GetBlockSubsidy returns the value of coinbase ValueSat at given height
+func (b *EthereumRPC) GetBlockSubsidy(height uint32) big.Int {
+   // missing implementation
+   return *big.NewInt(0)
+}

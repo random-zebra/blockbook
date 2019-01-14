@@ -184,6 +184,8 @@ type BlockChain interface {
 	GetMempoolEntry(txid string) (*MempoolEntry, error)
 	// parser
 	GetChainParser() BlockChainParser
+   // Misc
+   GetBlockSubsidy(height uint32) big.Int
 }
 
 // BlockChainParser defines common interface to parsing and conversions of block chain data

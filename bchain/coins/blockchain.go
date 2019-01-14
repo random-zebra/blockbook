@@ -245,3 +245,7 @@ func (c *blockChainWithMetrics) GetMempoolEntry(txid string) (v *bchain.MempoolE
 func (c *blockChainWithMetrics) GetChainParser() bchain.BlockChainParser {
 	return c.b.GetChainParser()
 }
+
+func (c *blockChainWithMetrics) GetBlockSubsidy(height uint32) big.Int  {
+	return c.b.GetBlockSubsidy(height)
+}
