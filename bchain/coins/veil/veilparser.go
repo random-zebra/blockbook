@@ -379,9 +379,12 @@ func (p *VeilParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
 		return nil, err
 	}
    // fix input (convert to big.Int and clear it)
-   if tx.Vin[0].Denom != "" {
-      tx.Vin[0].DenomSat, _ = p.AmountToBigInt(tx.Vin[0].Denom)
-      tx.Vin[0].Denom = ""
+   for i := range tx.Vin {
+      vin := &tx.Vin[i]
+      if vin.Denom != "" {
+         vin.DenomSat, _ = p.AmountToBigInt(vin.Denom)
+         vin.Denom = ""
+      }
    }
 
 	for i := range tx.Vout {
