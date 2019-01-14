@@ -463,6 +463,13 @@ func (w *Worker) GetAddress(address string, page int, txsOnPage int, onlyTxids b
 				continue
 			}
 			txs[txi] = w.txFromTxAddress(txid, ta, bi, bestheight)
+         // fix coinbase/zerocoin tx
+         if txs[txi].Vin[0].Txid == "" {
+            txs[txi], err = w.GetTransaction(txid, false)
+            if err != nil {
+               continue
+            }
+         }
 		}
 		txi++
 	}
