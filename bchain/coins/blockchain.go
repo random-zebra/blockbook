@@ -2,23 +2,8 @@ package coins
 
 import (
 	"blockbook/bchain"
-	"blockbook/bchain/coins/bch"
 	"blockbook/bchain/coins/btc"
-	"blockbook/bchain/coins/btg"
-	"blockbook/bchain/coins/dash"
-	"blockbook/bchain/coins/digibyte"
-	"blockbook/bchain/coins/dogecoin"
-	"blockbook/bchain/coins/eth"
-	"blockbook/bchain/coins/gamecredits"
-	"blockbook/bchain/coins/grs"
-	"blockbook/bchain/coins/litecoin"
-	"blockbook/bchain/coins/monacoin"
-	"blockbook/bchain/coins/myriad"
-	"blockbook/bchain/coins/namecoin"
-	"blockbook/bchain/coins/pivx"
    "blockbook/bchain/coins/veil"
-	"blockbook/bchain/coins/vertcoin"
-	"blockbook/bchain/coins/zec"
 	"blockbook/common"
 	"context"
 	"encoding/json"
@@ -37,32 +22,6 @@ var BlockChainFactories = make(map[string]blockChainFactory)
 
 func init() {
 	BlockChainFactories["Bitcoin"] = btc.NewBitcoinRPC
-	BlockChainFactories["Testnet"] = btc.NewBitcoinRPC
-	BlockChainFactories["Zcash"] = zec.NewZCashRPC
-	BlockChainFactories["Zcash Testnet"] = zec.NewZCashRPC
-	BlockChainFactories["Ethereum"] = eth.NewEthereumRPC
-	BlockChainFactories["Ethereum Classic"] = eth.NewEthereumRPC
-	BlockChainFactories["Ethereum Testnet Ropsten"] = eth.NewEthereumRPC
-	BlockChainFactories["Bcash"] = bch.NewBCashRPC
-	BlockChainFactories["Bcash Testnet"] = bch.NewBCashRPC
-	BlockChainFactories["Bgold"] = btg.NewBGoldRPC
-	BlockChainFactories["Dash"] = dash.NewDashRPC
-	BlockChainFactories["Dash Testnet"] = dash.NewDashRPC
-	BlockChainFactories["GameCredits"] = gamecredits.NewGameCreditsRPC
-	BlockChainFactories["Litecoin"] = litecoin.NewLitecoinRPC
-	BlockChainFactories["Litecoin Testnet"] = litecoin.NewLitecoinRPC
-	BlockChainFactories["Dogecoin"] = dogecoin.NewDogecoinRPC
-	BlockChainFactories["Vertcoin"] = vertcoin.NewVertcoinRPC
-	BlockChainFactories["Vertcoin Testnet"] = vertcoin.NewVertcoinRPC
-	BlockChainFactories["Namecoin"] = namecoin.NewNamecoinRPC
-	BlockChainFactories["Monacoin"] = monacoin.NewMonacoinRPC
-	BlockChainFactories["Monacoin Testnet"] = monacoin.NewMonacoinRPC
-	BlockChainFactories["DigiByte"] = digibyte.NewDigiByteRPC
-	BlockChainFactories["Myriad"] = myriad.NewMyriadRPC
-	BlockChainFactories["Groestlcoin"] = grs.NewGroestlcoinRPC
-	BlockChainFactories["Groestlcoin Testnet"] = grs.NewGroestlcoinRPC
-	BlockChainFactories["PIVX"] = pivx.NewPivxRPC
-	BlockChainFactories["PIVX Testnet"] = pivx.NewPivxRPC
    BlockChainFactories["Veil"] = veil.NewVeilRPC
    BlockChainFactories["Veil Testnet"] = veil.NewVeilRPC
 }
