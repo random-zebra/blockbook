@@ -269,5 +269,5 @@ func isZeroCoinMintScript(signatureScript []byte) bool {
 
 // Checks if script is OP_ZEROCOINSPEND
 func isZeroCoinSpendScript(signatureScript []byte) bool {
-	return (len(signatureScript) >= 100 && signatureScript[0] == OP_ZEROCOINSPEND) {
+	return (len(signatureScript) >= 100 && signatureScript[0] == OP_ZEROCOINSPEND)
 }
