@@ -232,10 +232,10 @@ func (p *PivXParser) GetAddressesFromAddrDesc(addrDesc bchain.AddressDescriptor)
 
 // outputScriptToAddresses converts ScriptPubKey to bitcoin addresses
 func (p *PivXParser) outputScriptToAddresses(script []byte) ([]string, bool, error) {
-	if (isZeroCoinSpendScript(script) {
+	if (isZeroCoinSpendScript(script)) {
          return []string{"Zerocoin Spend"}
    }
-   if (isZeroCoinMintScript(script) {
+   if (isZeroCoinMintScript(script)) {
          return []string{"Zerocoin Mint"}
    }
 
@@ -249,7 +249,12 @@ func (p *PivXParser) GetAddrDescForUnknownInput(tx *bchain.Tx, input int) bchain
 
 		if(scriptHex != "") {
 			script, _ := hex.DecodeString(scriptHex)
-			return script
+			if isZeroCoinMintScript(script) {
+            return OP_ZEROCOINMINT
+         }
+         if isZeroCoinSpendScript(script) {
+            return OP_ZEROCOINSPEND
+         }
 		}
 	}
 
