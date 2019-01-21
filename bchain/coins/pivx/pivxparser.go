@@ -209,11 +209,15 @@ func (p *PivXParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
 
 // outputScriptToAddresses converts ScriptPubKey to bitcoin addresses
 func (p *PivXParser) outputScriptToAddresses(script []byte) ([]string, bool, error) {
-	if (isZeroCoinSpendScript(script) || isZeroCoinMintScript(script)) {
-		hexScript := hex.EncodeToString(script)
-		anonAddr := "Anonymous " + hexScript
-		return []string{anonAddr}, false, nil
-	}
+	if isZeroCoinSpendScript(script) {
+      hexScript := hex.EncodeToString(script)
+      return []string{"Zerocoin Spend " + hexScript}, false, nil
+   }
+
+   if isZeroCoinMint(script) {
+      hexScript := hex.EncodeToString(script)
+      return []string{"Zerocoin Spend " + hexScript}, false, nil
+   }
 
 	rv, s, _ :=  p.BitcoinOutputScriptToAddressesFunc(script)
 	return rv, s, nil
@@ -231,6 +235,21 @@ func (p *PivXParser) GetAddrDescForUnknownInput(tx *bchain.Tx, input int) bchain
 
 	s := make([]byte, 10)
 	return s
+}
+
+func (p *PivXParser) GetValueSatForUnknownInput(tx *bchain.Tx, input int) *big.Int {
+   if len(tx.Vin) > input {
+		scriptHex := tx.Vin[input].ScriptSig.Hex
+
+		if(scriptHex != "") {
+			script, _ := hex.DecodeString(scriptHex)
+			if isZeroCoinSpendScript(script) {
+            // amount of zerocoinspend (denomination) stored in sequence
+            return big.NewInt((int64)(tx.Vin[input].Sequence))
+         }
+		}
+	}
+   return nil
 }
 
 // Checks if script is OP_ZEROCOINMINT

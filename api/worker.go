@@ -165,6 +165,10 @@ func (w *Worker) GetTransactionFromBchainTx(bchainTx *bchain.Tx, height uint32, 
 							if err != nil {
 								glog.Warning("GetAddressesFromAddrDesc tx ", bchainVin.Txid, ", addrDesc ", vin.AddrDesc, ": ", err)
 							}
+                     valueSat := w.chainParser.GetValueSatForUnknownInput(bchainTx, i)
+                     if valueSat != nil {
+                        vin.ValueSat = (*Amount)(&valueSat)
+                     }
 							continue
 						}
 						return nil, errors.Annotatef(err, "txCache.GetTransaction %v", bchainVin.Txid)

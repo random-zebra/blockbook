@@ -27,6 +27,11 @@ func (p *BaseParser) ParseTx(b []byte) (*Tx, error) {
 	return nil, errors.New("ParseTx: not implemented")
 }
 
+// GetAddrDescForUnknownInput returns nil ValueSat
+func (p *BaseParser) GetValueSatForUnknownInput(tx *Tx, input int) *big.Int {
+   return nil
+}
+
 // GetAddrDescForUnknownInput returns nil AddressDescriptor
 func (p *BaseParser) GetAddrDescForUnknownInput(tx *Tx, input int) AddressDescriptor {
 	var iTxid string
