@@ -561,6 +561,15 @@ func (b *BitcoinRPC) GetBlockInfo(hash string) (*bchain.BlockInfo, error) {
 		}
 		return nil, errors.Annotatef(res.Error, "hash %v", hash)
 	}
+
+    header, err := b.GetBlockHeader(hash)
+    if err != nil {
+       return nil, err
+    }
+    glog.Info("Got header:")
+    glog.Info(*header)
+    res.Result.BlockHeader = *header
+    
 	return &res.Result, nil
 }
 

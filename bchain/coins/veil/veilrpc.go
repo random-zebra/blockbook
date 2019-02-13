@@ -68,21 +68,13 @@ func (g *VeilRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
 
    glog.V(1).Info("rpc: getblock (verbosity=1) ", hash)
 
-   res := btc.ResGetBlockThin{}
-   req := btc.CmdGetBlock{Method: "getblock"}
-   req.Params.BlockHash = hash
-   req.Params.Verbosity = 1
-   err = g.Call(&req, &res)
-
+   bi, err := g.GetBlockInfo(hash)
    if err != nil {
-      return nil, errors.Annotatef(err, "hash %v", hash)
-   }
-   if res.Error != nil {
-      return nil, errors.Annotatef(res.Error, "hash %v", hash)
+      return nil, err
    }
 
-   txs := make([]bchain.Tx, 0, len(res.Result.Txids))
-   for _, txid := range res.Result.Txids {
+   txs := make([]bchain.Tx, 0, len(bi.Txids))
+   for _, txid := range bi.Txids {
       tx, err := g.GetTransaction(txid)
       if err != nil {
          if isInvalidTx(err) {
@@ -96,16 +88,13 @@ func (g *VeilRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
 
    // block is PoS (type=2) when nonce is zero
    blocktype := 1
-   bi, err := g.BitcoinRPC.GetBlockInfo(hash)
-   if err != nil {
-      return nil, err
-   }
    nonce, _ := bi.Nonce.Int64()
    if nonce == 0 {
       blocktype = 2
    }
+
    block := &bchain.Block{
-      BlockHeader: res.Result.BlockHeader,
+      BlockHeader: bi.BlockHeader,
       Txs:         txs,
       Type:        blocktype,
    }

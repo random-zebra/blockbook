@@ -86,6 +86,7 @@ type BlockHeader struct {
 	Confirmations int    `json:"confirmations"`
 	Size          int    `json:"size"`
 	Time          int64  `json:"time,omitempty"`
+	MoneySupply   json.Number `json:"moneysupply"`
 }
 
 // BlockInfo contains extended block header data and a list of block txids

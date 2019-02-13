@@ -16,12 +16,16 @@
     <div class="col-md-6">
         <table class="table data-table">
             <tbody>
-               <tr>
-                  <td style="width: 25%;">Consensus</td>
-                  <td class="data">
-                     {{- if ne $b.Nonce "0" -}}Proof of Work
-                     {{- else -}}Proof of Stake{{- end -}}
-                  </td>
+                <tr>
+                    <td style="width: 25%;">Total Supply</td>
+                    <td class="data">{{formatSatoshis $b.MoneySupply}} VEIL</td>
+                </tr>
+                <tr>
+                    <td>Consensus</td>
+                    <td class="data">
+                        {{- if ne $b.Nonce "0" -}}Proof of Work
+                        {{- else -}}Proof of Stake{{- end -}}
+                    </td>
                 </tr>
                 <tr>
                     <td>Transactions</td>
