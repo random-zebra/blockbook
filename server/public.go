@@ -357,6 +357,7 @@ func parseTemplates() []*template.Template {
 		"formatAmount":        formatAmount,
 		"setTxToTemplateData": setTxToTemplateData,
 		"stringInSlice":       stringInSlice,
+        "formatSatoshis":      formatSatoshis,
 	}
 	t := make([]*template.Template, tplCount)
 	t[errorTpl] = template.Must(template.New("error").Funcs(templateFuncMap).ParseFiles("./static/templates/error.html", "./static/templates/base.html"))
@@ -385,6 +386,13 @@ func formatAmount(a string) string {
 		return "0"
 	}
 	return a
+}
+
+// formatSatoshis returns the coins from satoshis amount
+func formatSatoshis(a json.Number) string {
+    val, _ := a.Float64()
+    coins := val / 1e8
+    return fmt.Sprintf("%.8f", coins)
 }
 
 // called from template to support txdetail.html functionality
