@@ -226,6 +226,7 @@ type ResGetBlockChainInfo struct {
 		Difficulty    json.Number `json:"difficulty"`
 		SizeOnDisk    int64       `json:"size_on_disk"`
 		Warnings      string      `json:"warnings"`
+        MoneySupply   json.Number `json:"moneysupply"`
 	} `json:"result"`
 }
 
@@ -450,6 +451,7 @@ func (b *BitcoinRPC) GetChainInfo() (*bchain.ChainInfo, error) {
 		SizeOnDisk:    resCi.Result.SizeOnDisk,
 		Subversion:    string(resNi.Result.Subversion),
 		Timeoffset:    resNi.Result.Timeoffset,
+        MoneySupply:   resCi.Result.MoneySupply,
 	}
 	rv.Version = string(resNi.Result.Version)
 	rv.ProtocolVersion = string(resNi.Result.ProtocolVersion)
@@ -566,10 +568,9 @@ func (b *BitcoinRPC) GetBlockInfo(hash string) (*bchain.BlockInfo, error) {
     if err != nil {
        return nil, err
     }
-    glog.Info("Got header:")
-    glog.Info(*header)
-    res.Result.BlockHeader = *header
-    
+
+    res.Result.MoneySupply = header.MoneySupply
+
 	return &res.Result, nil
 }
 

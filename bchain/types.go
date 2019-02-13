@@ -129,6 +129,7 @@ type ChainInfo struct {
 	ProtocolVersion string  `json:"protocolversion"`
 	Timeoffset      float64 `json:"timeoffset"`
 	Warnings        string  `json:"warnings"`
+	MoneySupply   json.Number `json:"moneysupply"`
 }
 
 type RPCError struct {

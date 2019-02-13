@@ -75,6 +75,10 @@
                     <td class="data">{{$be.Blocks}}</td>
                 </tr>
                 <tr>
+                    <td>Total Supply</td>
+                    <td class="data">{{formatSatoshis $be.MoneySupply}} {{$cs}}</td>
+                </tr>
+                <tr>
                     <td>Difficulty</td>
                     <td class="data">{{$be.Difficulty}}</td>
                 </tr>
@@ -91,7 +95,7 @@
                 {{- if $be.Warnings -}}
                 <tr>
                     <td>Warnings</td>
-                    <td class="data text-warning"><!-- {{$be.Warnings}}--></td> 
+                    <td class="data text-warning"><!-- {{$be.Warnings}}--></td>
                 </tr>
                 {{- end -}}
             </tbody>
