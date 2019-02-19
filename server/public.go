@@ -133,6 +133,8 @@ func (s *PublicServer) ConnectFullPublicInterface() {
 	serveMux.HandleFunc(path+"api/block/", s.jsonHandler(s.apiBlock))
 	serveMux.HandleFunc(path+"api/sendtx/", s.jsonHandler(s.apiSendTx))
 	serveMux.HandleFunc(path+"api/estimatefee/", s.jsonHandler(s.apiEstimateFee))
+    serveMux.HandleFunc(path+"api/totalbc/", s.jsonHandler(s.apiTotalBc))
+    serveMux.HandleFunc(path+"api/totalcoins/", s.jsonHandler(s.apiTotalCoins))
 	// socket.io interface
 	serveMux.Handle(path+"socket.io/", s.socketio.GetHandler())
 }
@@ -651,6 +653,34 @@ func (s *PublicServer) apiBlockIndex(r *http.Request) (interface{}, error) {
 	return resBlockIndex{
 		BlockHash: hash,
 	}, nil
+}
+
+func (s *PublicServer) apiTotalBc(r *http.Request) (interface{}, error) {
+    var err error
+	var supplyAmount json.Number
+
+	si, err := s.api.GetSystemInfo(true)
+    if err != nil {
+        return nil, err
+    }
+
+    supplyAmount = si.Backend.MoneySupply
+
+    return supplyAmount, nil
+}
+
+func (s *PublicServer) apiTotalCoins(r *http.Request) (interface{}, error) {
+    var err error
+	var supply string
+
+	supplyAmount, err := s.apiTotalBc(r)
+    if err != nil {
+        return nil, err
+    }
+    supplyNumber := supplyAmount.(json.Number)
+    supply = formatSatoshis(json.Number(supplyNumber))
+
+    return supply, nil
 }
 
 func (s *PublicServer) apiTx(r *http.Request) (interface{}, error) {
