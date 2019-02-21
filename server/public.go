@@ -411,6 +411,8 @@ func (s *PublicServer) parseTemplates() []*template.Template {
 		"formatAmountWithDecimals": formatAmountWithDecimals,
 		"setTxToTemplateData":      setTxToTemplateData,
 		"stringInSlice":            stringInSlice,
+        "formatBlockType":          formatBlockType,
+        "formatBlockTypeShort":     formatBlockTypeShort,
 	}
 	var createTemplate func(filenames ...string) *template.Template
 	if s.debug {
@@ -921,4 +923,25 @@ func (s *PublicServer) apiEstimateFee(r *http.Request, apiVersion int) (interfac
 		}
 	}
 	return nil, api.NewAPIError("Missing parameter 'number of blocks'", true)
+}
+
+// Custom Helper functions
+func formatBlockType(bt uint8) string {
+	if bt == 1 {
+        return "Proof of Work"
+    }
+    if bt == 2 {
+        return "Proof of Stake"
+    }
+    return "Unknown"
+}
+
+func formatBlockTypeShort(bt uint8) string {
+	if bt == 1 {
+        return "PoW"
+    }
+    if bt == 2 {
+        return "PoS"
+    }
+    return "???"
 }

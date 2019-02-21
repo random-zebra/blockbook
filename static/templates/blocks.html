@@ -7,11 +7,12 @@
     <table class="table table-striped data-table table-hover">
         <thead>
             <tr>
-                <th style="width: 10%;">Height</th>
-                <th style="width: 48%;">Hash</th>
-                <th>Timestamp</span></th>
-                <th class="text-right" style="width: 10%;">Transactions</th>
-                <th class="text-right" style="width: 10%;">Size</th>
+                <th style="width: 11%;">Height</th>
+                <th style="width: 46%;">Hash</th>
+                <th>Timestamp</th>
+                <th class="text-right" style="width: 6%;">Type</th>
+                <th class="text-right" title="number of Transactions in block" style="width: 7%;">TXs</th>
+                <th class="text-right" title="size in Bytes" style="width: 11%;">Size</th>
             </tr>
         </thead>
         <tbody>
@@ -20,6 +21,7 @@
                 <td><a href="/block/{{$b.Height}}">{{$b.Height}}</a></td>
                 <td class="ellipsis">{{$b.Hash}}</td>
                 <td>{{formatUnixTime $b.Time}}</td>
+                <td class="text-right">{{formatBlockTypeShort $b.Type}}</td>
                 <td class="text-right">{{$b.Txs}}</td>
                 <td class="text-right">{{$b.Size}}</td>
             </tr>

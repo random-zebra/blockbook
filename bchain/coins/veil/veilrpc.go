@@ -11,6 +11,7 @@ import (
 // VeilRPC is an interface to JSON-RPC bitcoind service.
 type VeilRPC struct {
 	*btc.BitcoinRPC
+    BitcoinGetBlockInfo func(hash string) (*bchain.BlockInfo, error)
 }
 
 // NewVeilRPC returns new VeilRPC instance.
@@ -22,6 +23,7 @@ func NewVeilRPC(config json.RawMessage, pushHandler func(bchain.NotificationType
 
 	s := &VeilRPC{
 		b.(*btc.BitcoinRPC),
+        b.GetBlockInfo,
 	}
 	s.RPCMarshaler = btc.JSONMarshalerV1{}
 	s.ChainConfig.SupportsEstimateFee = true
@@ -57,6 +59,25 @@ func (b *VeilRPC) Initialize() error {
 	return nil
 }
 
+// getBlockInfo extends GetBlockInfo for VeilRPC
+func (g *VeilRPC) GetBlockInfo(hash string) (*bchain.BlockInfo, error) {
+    bi, err := g.BitcoinGetBlockInfo(hash)
+    if err != nil {
+       return nil, err
+    }
+
+    // block is PoS (type=2) when nonce is zero
+    var blocktype uint8
+    blocktype = 1
+    nonce, _ := bi.Nonce.Int64()
+    if nonce == 0 {
+       blocktype = 2
+    }
+    bi.BlockHeader.Type = blocktype
+
+    return bi, nil
+}
+
 // GetBlock returns block with given hash.
 func (g *VeilRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
    var err error
@@ -87,18 +108,9 @@ func (g *VeilRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
       txs = append(txs, *tx)
    }
 
-   /* block is PoS (type=2) when nonce is zero
-   blocktype := 1
-   nonce, _ := bi.Nonce.Int64()
-   if nonce == 0 {
-      blocktype = 2
-   }
-   */
-
    block := &bchain.Block{
       BlockHeader: bi.BlockHeader,
       Txs:         txs,
-      //Type:        blocktype,
    }
    return block, nil
 }

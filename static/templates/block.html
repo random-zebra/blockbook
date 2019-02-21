@@ -17,7 +17,11 @@
         <table class="table data-table">
             <tbody>
                 <tr>
-                    <td style="width: 25%;">Transactions</td>
+                    <td style="width: 25%;">Generation</td>
+                    <td class="data">{{formatBlockType $b.Type}}</td>
+                </tr>
+                <tr>
+                    <td>Transactions</td>
                     <td class="data">{{$b.TxCount}}</td>
                 </tr>
                 <tr>

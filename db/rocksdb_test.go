@@ -175,7 +175,7 @@ func verifyAfterBitcoinTypeBlock1(t *testing.T, d *RocksDB, afterDisconnect bool
 	if err := checkColumn(d, cfHeight, []keyPair{
 		{
 			"000370d5",
-			"0000000076fbbed90fd75b0e18856aa35baa984e9c9d444cf746ad85e94e2997" + uintToHex(1534858021) + varuintToHex(2) + varuintToHex(1234567),
+			"0000000076fbbed90fd75b0e18856aa35baa984e9c9d444cf746ad85e94e2997" + uintToHex(1534858021) + varuintToHex(2) + varuintToHex(1234567) + "00",
 			nil,
 		},
 	}); err != nil {
@@ -256,12 +256,12 @@ func verifyAfterBitcoinTypeBlock2(t *testing.T, d *RocksDB) {
 	if err := checkColumn(d, cfHeight, []keyPair{
 		{
 			"000370d5",
-			"0000000076fbbed90fd75b0e18856aa35baa984e9c9d444cf746ad85e94e2997" + uintToHex(1534858021) + varuintToHex(2) + varuintToHex(1234567),
+			"0000000076fbbed90fd75b0e18856aa35baa984e9c9d444cf746ad85e94e2997" + uintToHex(1534858021) + varuintToHex(2) + varuintToHex(1234567) + "00",
 			nil,
 		},
 		{
 			"000370d6",
-			"00000000eb0443fd7dc4a1ed5c686a8e995057805f9a161d9a5a77a95e72b7b6" + uintToHex(1534859123) + varuintToHex(4) + varuintToHex(2345678),
+			"00000000eb0443fd7dc4a1ed5c686a8e995057805f9a161d9a5a77a95e72b7b6" + uintToHex(1534859123) + varuintToHex(4) + varuintToHex(2345678) + "00",
 			nil,
 		},
 	}); err != nil {

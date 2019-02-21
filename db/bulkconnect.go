@@ -193,6 +193,7 @@ func (b *BulkConnect) connectBlockBitcoinType(block *bchain.Block, storeBlockTxs
 			Time:   block.Time,
 			Txs:    uint32(len(block.Txs)),
 			Size:   uint32(block.Size),
+            Type:   block.Type,
 			Height: block.Height,
 		},
 		addresses: addresses,
