@@ -6,7 +6,9 @@ import (
    "encoding/hex"
    "encoding/json"
    "fmt"
+   	"math/big"
 
+   "github.com/golang/glog"
    "github.com/martinboehm/btcd/wire"
    "github.com/martinboehm/btcutil/chaincfg"
 )
@@ -211,6 +213,25 @@ func (p *VeilParser) GetAddrDescForUnknownInput(tx *bchain.Tx, input int) bchain
 
 	s := make([]byte, 10)
 	return s
+}
+
+func (p *VeilParser) GetValueSatForUnknownInput(tx *bchain.Tx, input int) *big.Int {
+	if len(tx.Vin) > input {
+		scriptHex := tx.Vin[input].ScriptSig.Hex
+
+		if scriptHex != "" {
+			script, _ := hex.DecodeString(scriptHex)
+			if isZeroCoinSpendScript(script) {
+                valueSat,  err := p.AmountToBigInt(tx.Vin[input].Denom)
+                if err != nil {
+                    glog.Warningf("tx %v: input %d unable to convert denom to big int", tx.Txid, input)
+                    return big.NewInt(0)
+                }
+                return &valueSat
+            }
+		}
+	}
+    return big.NewInt(0)
 }
 
 // Checks if script is OP_ZEROCOINMINT
