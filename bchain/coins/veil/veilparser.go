@@ -5,9 +5,8 @@ import (
    "blockbook/bchain"
    "encoding/hex"
    "encoding/json"
-   "math/big"
+   "fmt"
 
-   "github.com/martinboehm/btcd/blockchain"
    "github.com/martinboehm/btcd/wire"
    "github.com/martinboehm/btcutil/chaincfg"
 )
@@ -17,9 +16,6 @@ const (
    MainnetMagic wire.BitcoinNet = 0xa3d0cfb6
    TestnetMagic wire.BitcoinNet = 0xc4a7d1a8
 
-   // Dummy TxId for zerocoin
-   ZERO_INPUT = "0000000000000000000000000000000000000000000000000000000000000000"
-
    // Zerocoin op codes
    OP_ZEROCOINMINT  = 0xc1
    OP_ZEROCOINSPEND  = 0xc2
@@ -27,10 +23,17 @@ const (
    // Labels
    ZCMINT_LABEL = "Zerocoin Mint"
    ZCSPEND_LABEL = "Zerocoin Spend"
-   STAKE_LABEL = "Stake TX"
+   CBASE_LABEL = "CoinBase TX"
+   STAKE_LABEL = "CoinStake TX"
    //DATA_LABEL = "DATA"
    RINGCT_LABEL = "RingCT"
    CTDATA_LABEL = "Rangeproof"
+
+   // Dummy Internal Addresses
+   STAKE_ADDR_INT = 0xf7
+   RINGCT_ADDR_INT = 0xf8
+   CTDATA_ADDR_INT = 0xf9
+   CBASE_ADDR_INT = 0xfa
 )
 
 var (
@@ -62,14 +65,17 @@ type VeilParser struct {
    *btc.BitcoinParser
    baseparser                           *bchain.BaseParser
    BitcoinOutputScriptToAddressesFunc   btc.OutputScriptToAddressesFunc
+   BitcoinGetAddrDescFromAddress        func(address string) (bchain.AddressDescriptor, error)
 }
 
 
 // NewVeilParser returns new VeilParser instance
 func NewVeilParser(params *chaincfg.Params, c *btc.Configuration) *VeilParser {
+   bcp := btc.NewBitcoinParser(params, c)
    p := &VeilParser{
-       BitcoinParser:   btc.NewBitcoinParser(params, c),
+       BitcoinParser:   bcp,
        baseparser:      &bchain.BaseParser{},
+       BitcoinGetAddrDescFromAddress: bcp.GetAddrDescFromAddress,
    }
    p.BitcoinOutputScriptToAddressesFunc = p.OutputScriptToAddressesFunc
    p.OutputScriptToAddressesFunc = p.outputScriptToAddresses
@@ -108,67 +114,6 @@ func (p *VeilParser) UnpackTx(buf []byte) (*bchain.Tx, uint32, error) {
 }
 
 
-// Parses tx and adds handling for OP_ZEROCOINSPEND inputs
-func (p *VeilParser) TxFromMsgTx(t *wire.MsgTx, parseAddresses bool) bchain.Tx {
-	vin := make([]bchain.Vin, len(t.TxIn))
-	for i, in := range t.TxIn {
-		// extra check to not confuse Tx with single OP_ZEROCOINSPEND input as a coinbase Tx
-		if !isZeroCoinSpendScript(in.SignatureScript) && blockchain.IsCoinBaseTx(t) {
-			vin[i] = bchain.Vin{
-				Coinbase: hex.EncodeToString(in.SignatureScript),
-				Sequence: in.Sequence,
-			}
-			break
-		}
-
-		s := bchain.ScriptSig{
-			Hex: hex.EncodeToString(in.SignatureScript),
-			// missing: Asm,
-		}
-
-		txid := in.PreviousOutPoint.Hash.String()
-
-		vin[i] = bchain.Vin{
-			Txid:      txid,
-			Vout:      in.PreviousOutPoint.Index,
-			Sequence:  in.Sequence,
-			ScriptSig: s,
-		}
-	}
-	vout := make([]bchain.Vout, len(t.TxOut))
-	for i, out := range t.TxOut {
-		addrs := []string{}
-		if parseAddresses {
-			addrs, _, _ = p.OutputScriptToAddressesFunc(out.PkScript)
-		}
-		s := bchain.ScriptPubKey{
-			Hex:       hex.EncodeToString(out.PkScript),
-			Addresses: addrs,
-			// missing: Asm,
-			// missing: Type,
-		}
-		var vs big.Int
-		vs.SetInt64(out.Value)
-		vout[i] = bchain.Vout{
-			ValueSat:     vs,
-			N:            uint32(i),
-			ScriptPubKey: s,
-		}
-	}
-	tx := bchain.Tx{
-		Txid:     t.TxHash().String(),
-		Version:  t.Version,
-		LockTime: t.LockTime,
-		Vin:      vin,
-		Vout:     vout,
-		// skip: BlockHash,
-		// skip: Confirmations,
-		// skip: Time,
-		// skip: Blocktime,
-	}
-	return tx
-}
-
 // ParseTxFromJson parses JSON message containing transaction and returns Tx struct
 func (p *VeilParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
 	var tx bchain.Tx
@@ -189,6 +134,19 @@ func (p *VeilParser) ParseTxFromJson(msg json.RawMessage) (*bchain.Tx, error) {
 		if vout.ScriptPubKey.Addresses == nil {
 			vout.ScriptPubKey.Addresses = []string{}
 		}
+
+        if vout.ScriptPubKey.Hex == "" {
+            if vout.Type == "ringct" {
+                vout.ScriptPubKey.Hex = fmt.Sprintf("%02x", RINGCT_ADDR_INT)
+            } else if vout.Type == "data" {
+                vout.ScriptPubKey.Hex = fmt.Sprintf("%02x", CTDATA_ADDR_INT)
+            } else if vout.Type == "coinbase" {
+                vout.ScriptPubKey.Hex = fmt.Sprintf("%02x", CBASE_ADDR_INT)
+            } else if vout.Type == "standard" {
+                vout.ScriptPubKey.Hex = fmt.Sprintf("%02x", STAKE_ADDR_INT)
+            }
+        }
+
 	}
 
 	return &tx, nil
@@ -202,10 +160,44 @@ func (p *VeilParser) outputScriptToAddresses(script []byte) ([]string, bool, err
 	if isZeroCoinMintScript(script) {
 		return []string{ZCMINT_LABEL}, false, nil
 	}
+    if isCoinBaseScript(script) {
+        return []string{CBASE_LABEL}, false, nil
+    }
+    if isCoinStakeScript(script) {
+        return []string{STAKE_LABEL}, false, nil
+    }
+    if isRangeProofScript(script) {
+        return []string{CTDATA_LABEL}, false, nil
+    }
+    if isRingCTScript(script) {
+        return []string{RINGCT_LABEL}, false, nil
+    }
 
 	rv, s, _ := p.BitcoinOutputScriptToAddressesFunc(script)
 	return rv, s, nil
 }
+
+// GetAddrDescFromAddress returns internal address representation (descriptor) of given address
+func (p *VeilParser) GetAddrDescFromAddress(address string) (bchain.AddressDescriptor, error) {
+    // dummy address for cbase output
+   if address == STAKE_LABEL {
+      return bchain.AddressDescriptor{CBASE_ADDR_INT}, nil
+    }
+    // dummy address for stake output
+   if address == STAKE_LABEL {
+      return bchain.AddressDescriptor{STAKE_ADDR_INT}, nil
+	}
+   // dummy address for RingCT output
+   if address == RINGCT_LABEL {
+      return bchain.AddressDescriptor{RINGCT_ADDR_INT}, nil
+   }
+   // dummy address for Rangeproof output
+   if address == CTDATA_LABEL {
+      return bchain.AddressDescriptor{CTDATA_ADDR_INT}, nil
+   }
+   return p.BitcoinGetAddrDescFromAddress(address)
+}
+
 
 func (p *VeilParser) GetAddrDescForUnknownInput(tx *bchain.Tx, input int) bchain.AddressDescriptor {
 	if len(tx.Vin) > input {
@@ -229,4 +221,24 @@ func isZeroCoinMintScript(signatureScript []byte) bool {
 // Checks if script is OP_ZEROCOINSPEND
 func isZeroCoinSpendScript(signatureScript []byte) bool {
 	return len(signatureScript) >= 100 && signatureScript[0] == OP_ZEROCOINSPEND
+}
+
+// Checks if script is dummy internal address for Coinbase
+func isCoinBaseScript(signatureScript []byte) bool {
+	return len(signatureScript) == 1 && signatureScript[0] == CBASE_ADDR_INT
+}
+
+// Checks if script is dummy internal address for Stake
+func isCoinStakeScript(signatureScript []byte) bool {
+	return len(signatureScript) == 1 && signatureScript[0] == STAKE_ADDR_INT
+}
+
+// Checks if script is dummy internal address for RangeProof
+func isRangeProofScript(signatureScript []byte) bool {
+	return len(signatureScript) == 1 && signatureScript[0] == CTDATA_ADDR_INT
+}
+
+// Checks if script is dummy internal address for RingCT
+func isRingCTScript(signatureScript []byte) bool {
+	return len(signatureScript) == 1 && signatureScript[0] == RINGCT_ADDR_INT
 }

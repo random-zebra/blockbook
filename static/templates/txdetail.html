@@ -16,17 +16,23 @@
                         {{- range $vin := $tx.Vin -}}
                         <tr>
                             <td>
-                                {{- if $vin.Txid -}}
-                                <a class="float-left text-muted" href="/tx/{{$vin.Txid}}" title="Outpoint {{$vin.Txid}},{{$vin.Vout}}">➡&nbsp;</a>
+                                {{- if and $vin.Txid (ne $vin.Txid "0000000000000000000000000000000000000000000000000000000000000000") -}}
+                                    <a class="float-left text-muted" href="/tx/{{$vin.Txid}}" title="Outpoint {{$vin.Txid}},{{$vin.Vout}}">➡&nbsp;</a>
                                 {{- end -}}
                                 {{- range $a := $vin.Addresses -}}
-                                <span class="ellipsis float-left">
-                                    {{if and (ne $a $addr) $vin.Searchable}}<a href="/address/{{$a}}">{{$a}}</a>{{else}}{{$a}}{{end}}
-                                </span>
+                                    <span class="ellipsis float-left">
+                                        {{if and (ne $a $addr) $vin.Searchable}}<a href="/address/{{$a}}">{{$a}}</a>{{else}}{{$a}}{{end}}
+                                    </span>
                                 {{- else -}}
-                                <span class="float-left">{{- if $vin.Hex -}}Unparsed address{{- else -}}No Inputs (Newly Generated Coins){{- end -}}</span>
+                                    <span class="float-left">{{- if $vin.Hex -}}Unparsed address{{- else -}}No Inputs (Newly Generated Coins){{- end -}}</span>
                                 {{- end -}}{{- if $vin.Addresses -}}
-                                <span class="float-right{{if stringInSlice $addr $vin.Addresses}} text-danger{{end}}">{{formatAmount $vin.ValueSat}} {{$cs}}</span>
+                                    <span class="float-right{{if stringInSlice $addr $vin.Addresses}} text-danger{{end}}">
+                                        {{- if eq (formatAmount $vin.ValueSat) "0" -}}
+                                            <em>Hidden Amount</em>
+                                        {{- else -}}
+                                            {{formatAmount $vin.ValueSat}} {{$cs}}
+                                        {{- end -}}
+                                    </span>
                                 {{- end -}}
                             </td>
                         </tr>
@@ -56,11 +62,20 @@
                                     {{- if and (ne $a $addr) $vout.Searchable}}<a href="/address/{{$a}}">{{$a}}</a>{{else}}{{$a}}{{- end -}}
                                 </span>
                                 {{- else -}}
-                                <span class="float-left">Unparsed address</span>
+                                    <span class="float-left">Unparsed address</span>
                                 {{- end -}}
                                 <span class="float-right{{if stringInSlice $addr $vout.Addresses}} text-success{{end}}">
-                                    {{formatAmount $vout.ValueSat}} {{$cs}} {{if $vout.Spent}}<a class="text-danger" href="{{if $vout.SpentTxID}}/tx/{{$vout.SpentTxID}}{{else}}/spending/{{$tx.Txid}}/{{$vout.N}}{{end}}" title="Spent">➡</a>{{else -}}
-                                    <span class="text-success" title="Unspent"> <b>×</b></span>
+                                    {{- if eq (formatAmount $vout.ValueSat) "0" -}}
+                                        {{- if notEmptyAddresses $vout.Addresses -}}
+                                            <em>Hidden Amount</em>
+                                        {{- end -}}
+                                    {{- else -}}
+                                        {{formatAmount $vout.ValueSat}} {{$cs}} 
+                                        {{if $vout.Spent}}
+                                            <a class="text-danger" href="{{if $vout.SpentTxID}}/tx/{{$vout.SpentTxID}}{{else}}/spending/{{$tx.Txid}}/{{$vout.N}}{{end}}" title="Spent">➡</a>
+                                        {{- else -}}
+                                            <span class="text-success" title="Unspent"> <b>×</b></span>
+                                        {{- end -}}
                                     {{- end -}}
                                 </span>
                             </td>

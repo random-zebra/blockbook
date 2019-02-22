@@ -3,6 +3,7 @@ package server
 import (
 	"blockbook/api"
 	"blockbook/bchain"
+    "blockbook/bchain/coins/veil"
 	"blockbook/common"
 	"blockbook/db"
 	"context"
@@ -413,6 +414,7 @@ func (s *PublicServer) parseTemplates() []*template.Template {
 		"stringInSlice":            stringInSlice,
         "formatBlockType":          formatBlockType,
         "formatBlockTypeShort":     formatBlockTypeShort,
+        "notEmptyAddresses":        notEmptyAddresses,
 	}
 	var createTemplate func(filenames ...string) *template.Template
 	if s.debug {
@@ -944,4 +946,8 @@ func formatBlockTypeShort(bt uint8) string {
         return "PoS"
     }
     return "???"
+}
+
+func notEmptyAddresses(addys []string) bool {
+    return len(addys) > 0 && addys[0] != veil.CBASE_LABEL && addys[0] != veil.STAKE_LABEL && addys[0] != veil.CTDATA_LABEL
 }
