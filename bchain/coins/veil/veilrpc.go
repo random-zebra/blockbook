@@ -115,6 +115,10 @@ func (g *VeilRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
    return block, nil
 }
 
+// GetTransactionForMempool returns a transaction by the transaction ID
+func (b *VeilRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
+    return b.GetTransaction(txid)
+}
 
 func isMissingTx(err error) bool {
    return err == bchain.ErrTxNotFound

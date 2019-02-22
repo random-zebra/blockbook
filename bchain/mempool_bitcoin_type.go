@@ -88,8 +88,10 @@ func (m *MempoolBitcoinType) updateMappings(newTxToInputOutput map[string][]addr
 func (m *MempoolBitcoinType) getInputAddress(input Outpoint) *addrIndex {
 	itx, err := m.chain.GetTransactionForMempool(input.Txid)
 	if err != nil {
-		glog.Error("cannot get transaction ", input.Txid, ": ", err)
-		return nil
+        if input.Txid != "0000000000000000000000000000000000000000000000000000000000000000" {
+            glog.Error("cannot get transaction ", input.Txid, ": ", err)
+        }
+        return nil
 	}
 	if int(input.Vout) >= len(itx.Vout) {
 		glog.Error("Vout len in transaction ", input.Txid, " ", len(itx.Vout), " input.Vout=", input.Vout)
