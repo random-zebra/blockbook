@@ -106,6 +106,7 @@ type BlockHeader struct {
 	Confirmations int    `json:"confirmations"`
 	Size          int    `json:"size"`
 	Time          int64  `json:"time,omitempty"`
+    MoneySupply   json.Number `json:"moneysupply"`
     Type          uint8  // 1 = PoW, 2 = PoS
 }
 
@@ -118,6 +119,7 @@ type BlockInfo struct {
 	Bits       string      `json:"bits"`
 	Difficulty json.Number `json:"difficulty"`
 	Txids      []string    `json:"tx,omitempty"`
+    ZerocoinSupply  []ZCsupply    `json:"zerocoinsupply,omitempty"`
 }
 
 // MempoolEntry is used to get data about mempool entry
@@ -138,6 +140,12 @@ type MempoolEntry struct {
 	Depends         []string    `json:"depends"`
 }
 
+type ZCsupply struct {
+    Denom    string          `json:"denom"`
+    Amount   json.Number     `json:"amount"`
+    Percent  float64         `json:"percent"`
+}
+
 // ChainInfo is used to get information about blockchain
 type ChainInfo struct {
 	Chain           string  `json:"chain"`
@@ -151,6 +159,10 @@ type ChainInfo struct {
 	ProtocolVersion string  `json:"protocolversion"`
 	Timeoffset      float64 `json:"timeoffset"`
 	Warnings        string  `json:"warnings"`
+    PoWDiff         json.Number  `json:"difficulty_pow"`
+    PoSDiff         json.Number  `json:"difficulty_pos"`
+    MoneySupply     json.Number `json:"moneysupply"`
+    ZerocoinSupply  []ZCsupply    `json:"zerocoinsupply"`
 }
 
 // RPCError defines rpc error returned by backend

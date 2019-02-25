@@ -66,6 +66,12 @@ func (g *VeilRPC) GetBlockInfo(hash string) (*bchain.BlockInfo, error) {
        return nil, err
     }
 
+    header, err := g.GetBlockHeader(hash)
+    if err != nil {
+       return nil, err
+    }
+    bi.BlockHeader.MoneySupply = header.MoneySupply
+
     // block is PoS (type=2) when nonce is zero
     var blocktype uint8
     blocktype = 1
@@ -74,6 +80,14 @@ func (g *VeilRPC) GetBlockInfo(hash string) (*bchain.BlockInfo, error) {
        blocktype = 2
     }
     bi.BlockHeader.Type = blocktype
+
+    // get zerocoin Supply
+    var zcsupply []bchain.ZCsupply
+    zcsupply, err = g.GetZerocoinSupply(bi.BlockHeader.Height)
+    if err != nil {
+        glog.Errorf("Unable to get zerocoin supply at height %v", bi.BlockHeader.Height)
+    }
+    bi.ZerocoinSupply = zcsupply
 
     return bi, nil
 }
@@ -115,6 +129,93 @@ func (g *VeilRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
    return block, nil
 }
 
+
+
+// getblockchaininfo
+type CmdGetBlockChainInfo struct {
+	Method string `json:"method"`
+}
+
+type ResGetBlockChainInfo struct {
+	Error  *bchain.RPCError `json:"error"`
+	Result struct {
+		Chain         string      `json:"chain"`
+		Blocks        int         `json:"blocks"`
+        MoneySupply   json.Number `json:"moneysupply"`
+        ZerocoinSupply  []bchain.ZCsupply    `json:"zerocoinsupply"`
+		Headers       int         `json:"headers"`
+		Bestblockhash string      `json:"bestblockhash"`
+        PoWDiff       json.Number  `json:"difficulty_pow"`
+        PoSDiff       json.Number  `json:"difficulty_pos"`
+		SizeOnDisk    int64       `json:"size_on_disk"`
+		Warnings      string      `json:"warnings"`
+	} `json:"result"`
+}
+
+// getnetworkinfo
+type CmdGetNetworkInfo struct {
+	Method string `json:"method"`
+}
+
+type ResGetNetworkInfo struct {
+	Error  *bchain.RPCError `json:"error"`
+	Result struct {
+		Version         json.Number `json:"version"`
+		Subversion      json.Number `json:"subversion"`
+		ProtocolVersion json.Number `json:"protocolversion"`
+		Timeoffset      float64     `json:"timeoffset"`
+		Warnings        string      `json:"warnings"`
+	} `json:"result"`
+}
+
+// GetChainInfo returns information about the connected backend
+func (b *VeilRPC) GetChainInfo() (*bchain.ChainInfo, error) {
+	glog.V(1).Info("rpc: getblockchaininfo")
+
+	resCi := ResGetBlockChainInfo{}
+	err := b.Call(&CmdGetBlockChainInfo{Method: "getblockchaininfo"}, &resCi)
+	if err != nil {
+		return nil, err
+	}
+	if resCi.Error != nil {
+		return nil, resCi.Error
+	}
+
+	glog.V(1).Info("rpc: getnetworkinfo")
+	resNi := ResGetNetworkInfo{}
+	err = b.Call(&CmdGetNetworkInfo{Method: "getnetworkinfo"}, &resNi)
+	if err != nil {
+		return nil, err
+	}
+	if resNi.Error != nil {
+		return nil, resNi.Error
+	}
+
+	rv := &bchain.ChainInfo{
+		Bestblockhash: resCi.Result.Bestblockhash,
+		Blocks:        resCi.Result.Blocks,
+		Chain:         resCi.Result.Chain,
+		Headers:       resCi.Result.Headers,
+		SizeOnDisk:    resCi.Result.SizeOnDisk,
+		Subversion:    string(resNi.Result.Subversion),
+		Timeoffset:    resNi.Result.Timeoffset,
+        PoWDiff:       resCi.Result.PoWDiff,
+        PoSDiff:       resCi.Result.PoSDiff,
+        MoneySupply:   resCi.Result.MoneySupply,
+        ZerocoinSupply: resCi.Result.ZerocoinSupply,
+	}
+	rv.Version = string(resNi.Result.Version)
+	rv.ProtocolVersion = string(resNi.Result.ProtocolVersion)
+	if len(resCi.Result.Warnings) > 0 {
+		rv.Warnings = resCi.Result.Warnings + " "
+	}
+	if resCi.Result.Warnings != resNi.Result.Warnings {
+		rv.Warnings += resNi.Result.Warnings
+	}
+	return rv, nil
+}
+
+
 // GetTransactionForMempool returns a transaction by the transaction ID
 func (b *VeilRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
     return b.GetTransaction(txid)
@@ -122,4 +223,34 @@ func (b *VeilRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
 
 func isMissingTx(err error) bool {
    return err == bchain.ErrTxNotFound
+}
+
+
+// getzerocoinsupply
+type CmdGetZerocoinSupply struct {
+	Method string `json:"method"`
+    Params struct {
+        Height uint32 `json:"height"`
+    } `json:"params"`
+}
+
+type ResGetZerocoinSupply struct {
+	Error  *bchain.RPCError `json:"error"`
+	Result []bchain.ZCsupply `json:"result"`
+}
+
+// GetZerocoinSupply returns hash of block in best-block-chain at given height.
+func (b *VeilRPC) GetZerocoinSupply(height uint32) ([]bchain.ZCsupply, error) {
+	glog.V(1).Info("rpc: getblockhash ", height)
+
+	res := ResGetZerocoinSupply{}
+	req := CmdGetZerocoinSupply{Method: "getzerocoinsupply"}
+	req.Params.Height = height
+	err := b.Call(&req, &res)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Result, nil
 }

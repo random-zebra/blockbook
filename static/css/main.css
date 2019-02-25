@@ -35,6 +35,10 @@ h3 {
     padding-bottom: 1px;
 }
 
+.right-aligned {
+    text-align: right;
+}
+
 .navbar-form .form-control {
     background-color: gray;
     color: #fff;

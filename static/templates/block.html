@@ -21,6 +21,10 @@
                     <td class="data">{{formatBlockType $b.Type}}</td>
                 </tr>
                 <tr>
+                    <td>Total Supply</td>
+                    <td class="data">{{formatSatoshis $b.MoneySupply}} {{$cs}}</td>
+                </tr>
+                <tr>
                     <td>Transactions</td>
                     <td class="data">{{$b.TxCount}}</td>
                 </tr>
@@ -48,7 +52,7 @@
             <tbody>
                 <tr>
                     <td style="width: 25%;">Version</td>
-                    <td class="data ellipsis">{{$b.Version}}</td>
+                    <td class="data">{{$b.Version}}</td>
                 </tr>
                 <tr>
                     <td>Merkle Root</td>
@@ -56,15 +60,29 @@
                 </tr>
                 <tr>
                     <td>Nonce</td>
-                    <td class="data ellipsis">{{$b.Nonce}}</td>
+                    <td class="data">{{$b.Nonce}}</td>
                 </tr>
                 <tr>
                     <td>Bits</td>
-                    <td class="data ellipsis">{{$b.Bits}}</td>
+                    <td class="data">{{$b.Bits}}</td>
                 </tr>
                 <tr>
                     <td>Difficulty</td>
-                    <td class="data ellipsis">{{$b.Difficulty}}</td>
+                    <td class="data">{{$b.Difficulty}}</td>
+                </tr>
+                <tr>
+                    <td>Money Supply</td>
+                    <td class="data">{{formatSatoshis $b.MoneySupply}} {{$cs}}</td>
+                </tr>
+                <tr>
+                    <td>Zerocoin Supply</td>
+                    {{- range $d := $b.ZerocoinSupply -}}
+                        {{- if eq $d.Denom "total" -}}
+                        <td class="data">
+                            {{formatSatoshisZC $d.Amount}} z{{$cs}} &nbsp;<em>({{- formatPercent $d.Percent -}}%)
+                        </td>
+                        {{- end -}}
+                    {{- end -}}
                 </tr>
             </tbody>
         </table>
