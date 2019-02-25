@@ -39,6 +39,10 @@ h3 {
     text-align: right;
 }
 
+.center-aligned {
+    text-align: center;
+}
+
 .navbar-form .form-control {
     background-color: gray;
     color: #fff;

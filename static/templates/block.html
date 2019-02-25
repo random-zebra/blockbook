@@ -79,7 +79,7 @@
                     {{- range $d := $b.ZerocoinSupply -}}
                         {{- if eq $d.Denom "total" -}}
                         <td class="data">
-                            {{formatSatoshisZC $d.Amount}} z{{$cs}} &nbsp;<em>({{- formatPercent $d.Percent -}}%)
+                            {{formatSatoshisZC $d.Amount}} z{{$cs}} &nbsp;<em>({{- formatPercent $d.Percent -}})
                         </td>
                         {{- end -}}
                     {{- end -}}

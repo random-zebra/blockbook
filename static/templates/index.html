@@ -1,4 +1,5 @@
 {{define "specific"}}{{$cs := .CoinShortcut}}{{$bb := .Info.Blockbook}}{{$be := .Info.Backend}}{{$blocks := .Blocks}}
+{{ $lastdenom := subtract (len $be.ZerocoinSupply) 1 }}{{ $zctot := index $be.ZerocoinSupply $lastdenom}}
 {{- if $bb.InitialSync -}}
 <h3 class="bg-danger text-white" style="padding: 20px;">Application is now in initial synchronization and does not provide any data.</h3>
 {{- end -}}
@@ -20,7 +21,7 @@
 {{- end -}}
 <div class="row">
     <div class="col-md-6">
-        <h3>Last block</h3>
+        <h3>Block index</h3>
         <table class="table data-table">
             <tbody>
                 <tr>
@@ -57,7 +58,7 @@
         </table>
     </div>
     <div class="col-md-6">
-        <h3>Money supply</h3>
+        <h3>{{$cs}} supply</h3>
         <table class="table data-table">
             <tbody>
                 <tr>
@@ -65,14 +66,19 @@
                     <td style="width: 33%;"></td>
                     <td class="data">{{formatSatoshis $be.MoneySupply}}&nbsp;{{$cs}}</td>
                 </tr>
+                <tr title="amount and % over total supply">
+                    <td class="center-aligned">Zerocoin Supply</td>
+                    <td class="center-aligned"><em>Total</em></td>
+                    <td><span class="data"> &nbsp;{{formatSatoshisZC $zctot.Amount}}&nbsp;z{{$cs}}</span>&nbsp;<em>({{ formatPercent $zctot.Percent }})</em></td>
+                </tr>
                 {{- range $index, $d := $be.ZerocoinSupply -}}
+                    {{- if ne $d.Denom "total" -}}
                     <tr title="amount and % over total supply">
-                        <td>{{- if eq $index 0 -}}Zerocoin Supply{{- end -}}</td>
-                        {{- if ne $d.Denom "total" -}}<td class="right-aligned">{{- $d.Denom -}}-denom</td>
-                        {{- else -}}<td class="right-aligned"><em>Total zerocoin supply</em></td>
-                        {{- end -}}
-                        <td><span class="data"> &nbsp;{{formatSatoshisZC $d.Amount}}&nbsp;z{{$cs}}</span>&nbsp;<em>({{- formatPercent $d.Percent -}}%)</em></td>
+                        <td class="center-aligned">{{ $d.Denom }}-denom</td>
+                        <td class="center-aligned data">{{formatDenom $d}}</td>
+                        <td><span class="data"> &nbsp;{{formatSatoshisZC $d.Amount}}&nbsp;z{{$cs}}</span>&nbsp;<em>({{ formatPercent $d.Percent }})</em></td>
                     </tr>
+                    {{- end -}}
                 {{- end -}}
             </tbody>
         </table>

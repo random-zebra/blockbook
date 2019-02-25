@@ -423,6 +423,8 @@ func (s *PublicServer) parseTemplates() []*template.Template {
         "formatSatoshis":           formatSatoshis,
         "formatPercent":            formatPercent,
         "formatSatoshisZC":         formatSatoshisZC,
+        "subtract":                 subtract,
+        "formatDenom":              formatDenom,
 	}
 	var createTemplate func(filenames ...string) *template.Template
 	if s.debug {
@@ -999,5 +1001,22 @@ func formatSatoshisZC(a json.Number) string {
 
 // formatPercent returns the float to 2 decimal places and appends %
 func formatPercent(a float64) string {
-    return fmt.Sprintf("%.2f%%", a)
+    return fmt.Sprintf("%.2f %%", a)
+}
+
+// return a-b
+func subtract(a int, b int) int {
+    return a-b
+}
+
+// returns the amount of tokens on a given zerocoin denom
+func formatDenom(d bchain.ZCsupply) string {
+    val, _ := d.Amount.Float64()
+    coins := val / 1e8
+    den, err := strconv.Atoi(d.Denom)
+    if err != nil {
+        return ""
+    }
+    coins = coins / float64(den)
+    return fmt.Sprintf("%.0f", coins)
 }
