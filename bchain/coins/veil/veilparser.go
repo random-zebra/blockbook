@@ -1,12 +1,15 @@
 package veil
 
 import (
+   "bytes"
    "blockbook/bchain/coins/btc"
    "blockbook/bchain"
+   "encoding/binary"
    "encoding/hex"
    "encoding/json"
    "fmt"
-   	"math/big"
+   "io"
+   "math/big"
 
    "github.com/golang/glog"
    "github.com/martinboehm/btcd/wire"
@@ -222,16 +225,45 @@ func (p *VeilParser) GetValueSatForUnknownInput(tx *bchain.Tx, input int) *big.I
 		if scriptHex != "" {
 			script, _ := hex.DecodeString(scriptHex)
 			if isZeroCoinSpendScript(script) {
-                valueSat,  err := p.AmountToBigInt(tx.Vin[input].Denom)
+                valueSat,  err := p.GetValueSatFromZerocoinSpend(script)
                 if err != nil {
                     glog.Warningf("tx %v: input %d unable to convert denom to big int", tx.Txid, input)
                     return big.NewInt(0)
                 }
-                return &valueSat
+                return valueSat
             }
 		}
 	}
     return big.NewInt(0)
+}
+
+// Decodes the amount from the zerocoin spend script
+func (p *VeilParser) GetValueSatFromZerocoinSpend(signatureScript []byte) (*big.Int, error) {
+    r := bytes.NewReader(signatureScript)
+    r.Seek(1, io.SeekCurrent)                       // skip opcode
+    len, err := Uint8(r)                            // get serialized coinspend size
+    if err != nil {
+        return nil, err
+    }
+    r.Seek(int64(len), io.SeekCurrent)              // and skip its bytes
+    r.Seek(2, io.SeekCurrent)                       // skip version and spendtype
+    len,  err = Uint8(r)                            // get pubkey len
+    if err != nil {
+        return nil, err
+    }
+    r.Seek(int64(len), io.SeekCurrent)              // and skip its bytes
+    len, err = Uint8(r)                             // get vchsig len
+    if err != nil {
+        return nil, err
+    }
+    r.Seek(int64(len), io.SeekCurrent)              // and skip its bytes
+    // get denom
+    denom, err := Uint32(r, binary.LittleEndian)    // get denomination
+    if err != nil {
+        return nil, err
+    }
+
+    return big.NewInt(int64(denom)*1e8), nil
 }
 
 // Checks if script is OP_ZEROCOINMINT
