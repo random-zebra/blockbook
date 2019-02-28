@@ -163,6 +163,7 @@ type ChainInfo struct {
     PoSDiff         json.Number  `json:"difficulty_pos"`
     MoneySupply     json.Number `json:"moneysupply"`
     ZerocoinSupply  []ZCsupply    `json:"zerocoinsupply"`
+    NextSuperBlock  int
 }
 
 // RPCError defines rpc error returned by backend

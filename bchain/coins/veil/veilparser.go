@@ -39,6 +39,9 @@ const (
    RINGCT_ADDR_INT = 0xf8
    CTDATA_ADDR_INT = 0xf9
    CBASE_ADDR_INT = 0xfa
+
+   // Number of blocks per budget cycle
+   nBlocksPerPeriod = 43200
 )
 
 var (

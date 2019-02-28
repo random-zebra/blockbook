@@ -168,6 +168,17 @@ type ResGetNetworkInfo struct {
 	} `json:"result"`
 }
 
+// GetNextSuperBlock returns the next superblock height after nHeight
+func (b *VeilRPC) GetNextSuperBlock(nHeight int) int {
+    if b.Testnet {
+        if nHeight == 0 {
+            return 1
+        }
+        return nHeight - nHeight % nBlocksPerPeriod + 20000
+    }
+    return nHeight - nHeight % nBlocksPerPeriod + nBlocksPerPeriod
+}
+
 // GetChainInfo returns information about the connected backend
 func (b *VeilRPC) GetChainInfo() (*bchain.ChainInfo, error) {
 	glog.V(1).Info("rpc: getblockchaininfo")
@@ -191,6 +202,8 @@ func (b *VeilRPC) GetChainInfo() (*bchain.ChainInfo, error) {
 		return nil, resNi.Error
 	}
 
+    nextSuperBlock := b.GetNextSuperBlock(resCi.Result.Headers)
+
 	rv := &bchain.ChainInfo{
 		Bestblockhash: resCi.Result.Bestblockhash,
 		Blocks:        resCi.Result.Blocks,
@@ -203,6 +216,7 @@ func (b *VeilRPC) GetChainInfo() (*bchain.ChainInfo, error) {
         PoSDiff:       resCi.Result.PoSDiff,
         MoneySupply:   resCi.Result.MoneySupply,
         ZerocoinSupply: resCi.Result.ZerocoinSupply,
+        NextSuperBlock: nextSuperBlock,
 	}
 	rv.Version = string(resNi.Result.Version)
 	rv.ProtocolVersion = string(resNi.Result.ProtocolVersion)
